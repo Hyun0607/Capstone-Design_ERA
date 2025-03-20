@@ -1,0 +1,99 @@
+.App {
+  text-align: center;
+}
+
+.black-nav {
+  display: flex;
+  background: black;
+  width: 100%;
+  color: white;
+  justify-content: center;
+}
+
+/* 메뉴 스타일 */
+.menu ul {
+  list-style-type: none; /* 목록 표시 제거 */
+  padding: 10px; /* 내부 여백 제거 */
+  display: flex; /* 메뉴 항목을 1행으로 나열 */
+  justify-content: center;
+}
+
+.menu ul li {
+  cursor: pointer; /* 포인터 모양 */
+  padding: 20px; /* 내부 여백 */
+  background-color: lightblue; /* 배경색 */
+  margin: 10px; /* 항목 간 여백 */
+  border-radius: 10px; /* 모서리 둥글게 */
+  font-weight: bolder; /* 폰트 굵게 */
+  font-size: 20px;
+  position: relative;
+}
+
+.menu ul li ul {
+  display: none;
+  list-style-type: none;
+  padding: 5px;
+  background-color: lightgray;
+  border-radius: 10px; 
+  position: absolute; /* 하위 메뉴를 절대 위치로 설정 */
+  top: 100%; /* 부모 메뉴 항목 바로 아래에 위치 */
+  left: 0;
+  width: 200px; /* 하위 메뉴의 너비 설정 */
+  display: grid; /* 그리드 레이아웃 사용 */
+  grid-template-columns: 1fr 1fr; /* 2열 종대 설정 */
+}
+
+.menu ul li:hover ul {
+  display: grid; /* 마우스를 올리면 하위 메뉴 표시 */
+}
+
+.menu ul li ul li {
+  padding: 10px; /* 하위 메뉴 항목의 내부 여백 증가 */
+  background-color: lightgray;
+  margin: 5px 0; /* 하위 메뉴 항목 간 여백 증가 */
+  font-size: 18px; /* 하위 메뉴 항목의 폰트 크기 증가 */
+}
+
+/* 활성화된 필터 스타일 */
+.menu ul li.active {
+  background-color: darkblue; /* 활성화된 필터의 배경색 */
+  color: white; /* 활성화된 필터의 글자색 */
+}
+
+/* 쿼리 창 스타일 */
+.query-container {
+  margin-top: 60px; /* 상단 여백 */
+  display: flex;  /* 가로 정렬 */
+  justify-content: center; /* 가운데 정렬 */
+  align-items: center; /* 세로 정렬 */
+  flex-direction: column; /* 세로 정렬 */
+}
+
+.query-input {
+  width: 80%;
+  height: 150px;
+  padding: 10px;
+  font-size: 26px;
+  border: 1px solid #ccc; /* 테두리 */
+  border-radius: 5px;
+}
+
+.query-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 26px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background-color: lightblue;
+  cursor: pointer;
+}
+
+/* 응답 표시 스타일 */
+.response-container {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: white;
+  border-radius: 5px;
+  width: 80%;
+  text-align: left;
+}
