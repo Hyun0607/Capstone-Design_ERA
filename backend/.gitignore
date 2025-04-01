@@ -1,0 +1,27 @@
+# Python 캐시 및 빌드 파일
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# 환경 파일
+.env
+
+# 데이터베이스, 로그
+*.db
+*.log
+
+# VSCode 및 JetBrains IDE 설정
+.vscode/
+.idea/
+
+# Chroma 벡터 DB 저장 폴더
+chroma_db/
+
+# 오프로드된 모델 디렉터리
+offload/
+
+# 운영체제 관련 숨김파일
+.DS_Store
+Thumbs.db
