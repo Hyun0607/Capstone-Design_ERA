@@ -26,28 +26,38 @@ function App() {
   };
 
   return (
-    <div className="App" style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
-      <h1>Silver Stay 숙소 추천</h1>
-      <textarea
-        rows={4}
-        style={{ width: "100%" }}
-        value={question}
-        onChange={(e) => setQuestion(e.target.value)}
-        placeholder="예: 휠체어로 접근 가능한 조용한 숙소 추천해줘."
-      />
-      <button onClick={handleAsk} style={{ marginTop: 10 }}>
-        {loading ? "추천 중..." : "AI 추천 받기"}
-      </button>
+    <div className="App">
+      <header className="App-header">
+        <h1>Silver Stay</h1>
+        <h2>AI 기반 숙소 추천</h2>
+      </header>
 
-      {response && (
-        <div style={{ marginTop: 30 }}>
-          <h3>🤖 AI 응답</h3>
-          <pre style={{ whiteSpace: "pre-wrap" }}>{response}</pre>
-        </div>
-      )}
+      <main className="App-main">
+        <section className="App-prompt">
+          <textarea
+            rows={4}
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder="예: 휠체어로 접근 가능한 조용한 숙소 추천해줘."
+          />
+          <button onClick={handleAsk}>
+            {loading ? "추천 중..." : "AI 추천 받기"}
+          </button>
+        </section>
+
+        {response && (
+          <section className="App-response">
+            <h3>🤖 AI 응답</h3>
+            <pre>{response}</pre>
+          </section>
+        )}
+      </main>
+
+      <footer className="App-footer">
+        <p>ⓒ 2025 Silver Stay</p>
+      </footer>
     </div>
   );
 }
 
 export default App;
-
