@@ -75,7 +75,6 @@
   white-space: pre-wrap;
 }
 
-/* ✅ 응답창 전체 컨테이너 */
 .App-response-container {
   position: relative;
   width: 100%;
@@ -83,14 +82,13 @@
   justify-content: center;
 }
 
-/* ✅ 응답창 */
 .App-response {
   width: 100%;
-  max-width: 1080px; /* ✅ 조건창보다 살짝 넓게 */
+  max-width: 1080px;
   margin: 0 auto;
   text-align: left;
   background-color: white;
-  padding: 1.5rem 3rem; /* ✅ 좌우 여유 있게 */
+  padding: 1.5rem 3rem;
   border-radius: 12px;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
   white-space: pre-wrap;
@@ -100,7 +98,34 @@
   justify-content: flex-start;
 }
 
-/* ✅ 버튼: 응답창 중간 좌우 */
+/* ✅ 이미지 + 텍스트 나란히 */
+.response-content {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: flex-start;
+}
+
+.response-image {
+  width: 180px;
+  height: 180px;
+  flex-shrink: 0;
+  margin-top: 0.5rem;
+}
+
+.response-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.response-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
 .nav-button {
   position: absolute;
   top: 50%;
@@ -116,7 +141,7 @@
 }
 
 .nav-button.left {
-  left: calc(50% - 540px - 10px); /* ✅ 1080/2 = 540 */
+  left: calc(50% - 540px - 10px);
 }
 
 .nav-button.right {
@@ -127,7 +152,6 @@
   background-color: #999;
 }
 
-/* ✅ 프롬프트 */
 .App-prompt {
   display: flex;
   flex-direction: column;
@@ -162,12 +186,84 @@
   background-color: #87cbee;
 }
 
-/* ✅ 푸터 */
 .App-footer {
   background-color: #000;
   color: white;
   padding: 1rem;
   font-size: 0.9rem;
+}
+
+/* ✅ 모달 공통 */
+.Modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.Modal-box {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.Modal-box textarea {
+  width: 100%;
+  max-width: 92%;
+  margin: 0 auto;
+  font-size: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.loaded-message {
+  color: green;
+  font-weight: bold;
+  text-align: center;
+}
+
+.confirm-question {
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin: 1rem 0 0.5rem;
+  text-align: center;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.modal-footer button {
+  padding: 0.6rem 1.2rem;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #e0e0e0;
+}
+
+.modal-footer .button1 {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background-color: #e0e0e0;
 }
 
 /* ✅ 반응형 */

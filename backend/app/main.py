@@ -39,5 +39,6 @@ async def recommend(query: QueryRequest):
         )
 
     return {"response": response}
+#cd backend
 #.\venv310\Scripts\Activate.ps1
 #uvicorn app.main:app --reload
