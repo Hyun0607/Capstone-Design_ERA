@@ -1,10 +1,11 @@
-# ✅ 4. 프롬프트 템플릿
+# ✅ 4. 프롬프트 템플릿 (다양성 지시 추가)
 template = """
 당신은 고령자나 장애인을 위한 숙소 추천 설명을 생성하는 AI입니다.
 
 아래는 사용자 요청과 관련된 숙소 정보 목록입니다.
 각 숙소명을 그대로 사용해서, 왜 적합한지 1~2문장으로 설명해 주세요.
 ❗절대 새로운 숙소명을 만들어내지 마세요.
+❗동일한 숙소는 중복해서 추천하지 마세요. 서로 다른 숙소를 제시하세요.
 
 출력 예시 (참고용):
 1. [숙소명]: 탑스텐 강릉 호텔
@@ -21,7 +22,6 @@ template = """
 사용자 질문:
 {question}
 """
-
 
 prompt = PromptTemplate(input_variables=["context", "question"], template=template)
 llm_chain = LLMChain(llm=llm, prompt=prompt)
