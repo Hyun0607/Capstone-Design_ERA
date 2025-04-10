@@ -1,0 +1,27 @@
+/* Reactive.css */
+
+
+@media (min-width: 1024px) {
+  .HomePC {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .HomeTablet {
+    display: block;
+  }
+}
+
+@media (max-width: 767px) {
+  .HomeMobile {
+    display: block;
+  }
+}
+
+
+.HomePC,
+.HomeTablet,
+.HomeMobile {
+  display: none;
+}
