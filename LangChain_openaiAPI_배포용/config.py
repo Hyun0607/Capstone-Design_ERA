@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 
 # ✅ OpenAI API 키 설정
 # 배포 시 .env 파일이나 환경변수로 관리하는 것을 권장합니다
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = "sk-proj-...."
 
 # ✅ 벡터 DB 저장 위치
 PERSIST_DIR = "./chroma_db_v2"
