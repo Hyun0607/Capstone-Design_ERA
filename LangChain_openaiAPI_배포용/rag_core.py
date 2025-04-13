@@ -8,7 +8,7 @@ import pandas as pd
 from config import engine, PERSIST_DIR
 
 # ✅ GPT-4 Turbo 모델 및 프롬프트 템플릿 정의
-llm = ChatOpenAI(model_name="gpt-4-turbo", temperature=0.1, max_tokens=256)
+llm = ChatOpenAI(model_name="gpt-4-turbo", temperature=0.3, max_tokens=256)
 
 template = """
 당신은 고령자나 장애인을 위한 숙소 추천 설명을 생성하는 AI입니다.
