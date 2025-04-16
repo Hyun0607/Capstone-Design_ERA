@@ -1,261 +1,256 @@
 import './App.css';
 import './Reactive.css';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import axios from 'axios';
 import ConfirmationPopup from './Popup';
-import ResultSlider from './ResultSlider';
+import ResultList from './ResultList';
 
 function App() {
-  const [showRegions, setShowRegions] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState('지역');
-  const [showPeople, setShowPeople] = useState(false);
   const [selectedPeople, setSelectedPeople] = useState('인원');
-  const [luggage, setLuggage] = useState(false);
-  const [pets, setPets] = useState(false);
-  const [wheelchair, setWheelchair] = useState(false);
-  const [trail, setTrail] = useState(false);
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState([]);
-  const [error, setError] = useState('');
-  const [showResults, setShowResults] = useState(false);
-  const [isPopupVisible, setIsPopupVisible] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [viewRange, setViewRange] = useState(0);
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [showRegions, setShowRegions] = useState(false);
+  const [showPeople, setShowPeople] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [error, setError] = useState('');
+  const [micDenied, setMicDenied] = useState(false); // 마이크 차단 여부 -default 상태: 허용
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn('이 브라우저는 음성 인식을 지원하지 않습니다.');
-      return;
-    }
+  const recognitionRef = useRef(null);
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ko-KR';
-    recognition.interimResults = true;
-    recognition.continuous = false;
+  const regions = useMemo(() => (
+    [
+      '춘천시', '원주시', '강릉시', '동해시', '태백시', '속초시', '삼척시',
+      '홍천군', '횡성군', '영월군', '평창군', '정선군', '철원군', '화천군', '양구군', '인제군', '고성군', '양양군'
+    ]
+  ), []);
 
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map(result => result[0].transcript)
-        .join('');
-      setQuery(transcript);
+  // 음성 인식 시작
+  const extractRegionPeople = useCallback((text) => {
+    const peopleMatch = text.match(/[0-9]+명/);
+    const regionMatch = regions.find(r => text.includes(r)); // 바깥 변수 regions 사용
+    if (regionMatch) setSelectedRegion(regionMatch);
+    if (peopleMatch) setSelectedPeople(peopleMatch[0]);
+  }, [regions]);
+  
+
+  const startVoiceRecognition = useCallback(() => {
+    const processVoiceInput = (text) => {
+      setQuery(text);
+      extractRegionPeople(text);
+      setIsPopupVisible(true);
     };
 
-    recognition.onend = () => {
-      handleQuerySubmit();
-    };
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+          console.warn('이 브라우저는 음성 인식을 지원하지 않습니다.');
+          setMicDenied(true);
+          return;
+        }
 
-    recognition.start();
-  }, []);
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'ko-KR';
+        recognition.interimResults = false;
+        recognition.continuous = false;
 
-  // 지역 / 인원 드롭다운 
-  const toggleRegions = () => setShowRegions(!showRegions);
-  const togglePeople = () => setShowPeople(!showPeople);
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          processVoiceInput(transcript);
+        };
 
-  // 지역 / 인원 선택
-  const handleRegionSelect = (region) => {
-    setSelectedRegion(region);
-    setShowRegions(false);
-  };
+        recognitionRef.current = recognition;
+        recognition.start();
+      })
+    .catch(() => {
+      setMicDenied(true);
+      });
+  }, [extractRegionPeople]);
 
-  const handlePeopleSelect = (people) => {
-    setSelectedPeople(people);
-    setShowPeople(false);
-  };
 
-  // 필터 토글
-  const toggleFilter = (filter, setFilter) => setFilter(!filter);
 
-  const handleQueryChange = (event) => setQuery(event.target.value);
-
-  // 예외 흐름 처리 (지역, 인원 선택 안했을 때)
-  // 되물음 팝업 표시
   const handleQuerySubmit = useCallback(() => {
-    if (selectedRegion === '지역') {
-      setError('지역을 설정해 주세요.');
-      return;
-    } else if (selectedPeople === '인원' || selectedPeople === '0명') {
-      setError('인원을 설정해 주세요.');
+    if (selectedRegion === '지역' || selectedPeople === '인원') {
+      setError('지역과 인원을 입력해 주세요.');
       return;
     }
     setError('');
     setIsPopupVisible(true);
   }, [selectedRegion, selectedPeople]);
 
-  // 오타 교정
-  const correctTypos = (text) => {
-    const corrections = {
-      '잇ㅅ어요': '있어요',
-      '없써요': '없어요',
-      '휠체ㅓ': '휠체어',
-      '반려도물': '반려동물',
-      '가깝은': '가까운',
-      '짐보관': '짐 보관'
+  const handleConfirm = useCallback(async () => { /* 오타 교정 */
+    const correctTypos = (text) => {
+      const corrections = {
+        '잇ㅅ어요': '있어요',
+        '없써요': '없어요',
+        '휠체ㅓ': '휠체어',
+        '반려도물': '반려동물',
+        '가깝은': '가까운',
+        '짐보관': '짐 보관'
+      };
+      let corrected = text;
+      for (const typo in corrections) {
+        const regex = new RegExp(typo, 'g');
+        corrected = corrected.replace(regex, corrections[typo]);
+      }
+      return corrected;
     };
-    let corrected = text;
-    for (const typo in corrections) {
-      const regex = new RegExp(typo, 'g');
-      corrected = corrected.replace(regex, corrections[typo]);
-    }
-    return corrected;
-  };
 
-  // 백엔드에 숙소 API 호출 요청
-  const fetchRecommendations = async (correctedQuery) => {
-    const res = await axios.post('http://localhost:8000/query', {
-      query: correctedQuery,
-      region: selectedRegion,
-      people: selectedPeople,
-      luggage,
-      pets,
-      wheelchair,
-      trail,
-    });
-    return res.data.results;
-  };
-  
-  // 되물음 창에서 "네" 클릭 시
-  const handleConfirm = async () => {
+    const fetchRecommendations = async (correctedQuery) => { /* 백엔드로 정보 요청 */
+      const res = await axios.post('https://c1a9-34-125-147-207.ngrok-free.app/recommend', {
+        query: correctedQuery,
+        region: selectedRegion,
+        people: selectedPeople,
+      });
+      return res.data.results;
+    };
+
     const correctedQuery = correctTypos(query);
     try {
       const results = await fetchRecommendations(correctedQuery);
       setResponse(results);
-      setIsPopupVisible(false);
       setShowResults(true);
-      setTimeout(() => {
-        window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
-      }, 200);
+      setIsPopupVisible(false);
+      setViewRange(0);
     } catch (error) {
       console.error('Error:', error);
     }
-  };
+  }, [query, selectedRegion, selectedPeople]);
 
-  // 결과 화면에서 "초기 화면으로" 클릭 시
-  const handleReset = () => {
-    setShowResults(false);
-    setSelectedRegion('지역');
-    setSelectedPeople('인원');
-    setLuggage(false);
-    setPets(false);
-    setWheelchair(false);
-    setTrail(false);
-    setQuery('');
-    setResponse([]);
-    setError('');
-    setCurrentIndex(0);
-    setViewRange(0);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
-  // 결과 화면에서 "다른 숙소" 클릭 시
+  const handleCancel = useCallback(() => {
+    setIsPopupVisible(false);
+    if (!micDenied) startVoiceRecognition(); // 마이크 허용 시, 음성 인식 재시작
+  }, [micDenied, startVoiceRecognition]);
+
   const handleResearch = () => {
-    const nextRange = (viewRange + 1) * 3;
-    if (nextRange >= response.length) {
-      alert('더 이상 조건에 해당하는 숙소가 없습니다.');
+    const next = (viewRange + 1) * 3;
+    if (next >= response.length) {
+      alert('더 이상 숙소가 없습니다.');
       return;
     }
     setViewRange(viewRange + 1);
-    setCurrentIndex(nextRange);
   };
 
-  // 슬라이드 좌우 이동
-  const handleSlide = (dir) => {
-    const base = viewRange * 3;
-    setCurrentIndex((prev) => {
-      const max = Math.min(response.length - 1, base + 2);
-      const min = base;
-      if (dir === 'left') {
-        return prev === min ? max : prev - 1;
-      } else {
-        return prev === max ? min : prev + 1;
-      }
-    });
+  const handleReset = () => {
+    setSelectedRegion('지역');
+    setSelectedPeople('인원');
+    setQuery('');
+    setResponse([]);
+    setViewRange(0);
+    setShowResults(false);
+    setError('');
+    if (!micDenied) startVoiceRecognition();
   };
 
-  const regions = ['춘천', '원주', '강릉', '동해', '태백', '속초', '삼척', '홍천', '횡성', '영월', '평창', '정선', '철원', '화천', '양구', '인제', '고성', '양양'];
+  useEffect(() => {
+    startVoiceRecognition();
+  }, [startVoiceRecognition]);
+
+  // Popup 열릴 때 "네 / 아니오" 음성 인식
+  useEffect(() => {
+    if (!isPopupVisible || micDenied) return;
+  
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+  
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ko-KR';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+  
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript.trim().toLowerCase();
+      if (transcript.includes("네")) handleConfirm();
+      else if (transcript.includes("아니오")) handleCancel();
+    };
+  
+    recognition.start();
+    return () => recognition.abort();
+  }, [isPopupVisible, micDenied, handleConfirm, handleCancel]);
 
   return (
     <div className="App">
       <div className="Title">
-        <h3>SilverStay
-          <span>노약자 & 장애인분들을 위한 강원도 숙소 가이드</span>
-        </h3>
+        <h3>SilverStay<span>노약자 & 장애인분들을 위한 강원도 숙소 가이드</span></h3>
       </div>
 
-      <h3>사용방법
-        <span>
-          <div>1. 원하시는 지역과 인원을 선택해 주세요.</div>
-          <div>2. 조건을 입력 또는 눌러 주세요.</div>
-          <div>3. 검색 버튼을 누르세요.</div>
-        </span>
-      </h3>
+      {!showResults && (
+        <div className="query-container">
+          <h3>{micDenied ? '조건을 직접 입력해 주세요' : '여행을 가실 지역 & 인원을 말씀해주세요'}</h3>
+          
+          {micDenied && (
+            <div className="menu">
+              <ul>
+                {/* 지역 드롭다운 */}
+                <li onClick={() => setShowRegions(!showRegions)}>
+                  {selectedRegion}
+                  {showRegions && (
+                    <ul>
+                      {regions.map((region, idx) => (
+                        <li key={idx} onClick={() => {
+                          setSelectedRegion(region);
+                          setShowRegions(false);
+                        }}>
+                          {region}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
 
-      {/* 지역 / 인원 / 조건 선택 UI */}
-      <div className="menu">
-        <ul>
-          <li onClick={toggleRegions}>{selectedRegion}
-            {showRegions && (<ul>{regions.map((region, idx) => (<li key={idx} onClick={() => handleRegionSelect(region)}>{region}</li>))}</ul>)}
-          </li>
-          <li onClick={togglePeople}>{selectedPeople}
-            {showPeople && (<ul>{['0명', '1명', '2명', '3명', '4명', '5명', '6명', '7명', '8명 이상'].map((p, idx) => (<li key={idx} onClick={() => handlePeopleSelect(p)}>{p}</li>))}</ul>)}
-          </li>
-          <li onClick={() => toggleFilter(luggage, setLuggage)} className={luggage ? 'active' : ''}>짐 보관</li>
-          <li onClick={() => toggleFilter(pets, setPets)} className={pets ? 'active' : ''}>반려동물 동반 여부</li>
-          <li onClick={() => toggleFilter(wheelchair, setWheelchair)} className={wheelchair ? 'active' : ''}>휠체어</li>
-          <li onClick={() => toggleFilter(trail, setTrail)} className={trail ? 'active' : ''}>산책로</li>
-        </ul>
-      </div>
+                {/* 인원 드롭다운 */}
+                <li onClick={() => setShowPeople(!showPeople)}>
+                  {selectedPeople}
+                  {showPeople && (
+                    <ul>
+                      {['1명', '2명', '3명', '4명', '5명 이상'].map((p, idx) => (
+                        <li key={idx} onClick={() => {
+                          setSelectedPeople(p);
+                          setShowPeople(false);
+                        }}>
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              </ul>
+            </div>
+          )}
 
-      {/* 쿼리 입력창 */}
-      <div className="query-container">
-        <textarea placeholder="원하시는 숙소의 조건을 입력해 주세요." 
-                  className="query-input" value={query} 
-                  onChange={handleQueryChange} />
-        <button className="query-button" onClick={handleQuerySubmit}>
-          검색
-        </button>
-        {error && (
-        <div className="error-message" data-message={error}>
-          <button onClick={() => setError('')}>네</button>
+          <textarea
+            placeholder="숙소 조건을 입력해 주세요."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="query-input"
+          />
+          <button className="query-button" onClick={handleQuerySubmit}>검색</button>
+          {error && <div className="error-message" data-message={error}><button onClick={() => setError('')}>확인</button></div>}
         </div>
-        )}
-      </div>
+      )}
 
-      {/* 되물음 팝업 */}
       {isPopupVisible && (
         <ConfirmationPopup
           region={selectedRegion}
           people={selectedPeople}
           query={query}
-          conditions={{ luggage, pets, wheelchair, trail }}
+          conditions={{}} 
           onConfirm={handleConfirm}
-          onCancel={() => setIsPopupVisible(false)}
+          onCancel={handleCancel}
         />
       )}
 
-      {/* 추천 결과 표시 */}
-      {showResults && response.length > 0 && (
-        <ResultSlider
-          response={response}
-          currentIndex={currentIndex}
-          viewRange={viewRange}
-          onSlide={handleSlide}
+      {showResults && (
+        <ResultList
+          hotels={response.slice(viewRange * 3, viewRange * 3 + 3)}
           onReset={handleReset}
           onResearch={handleResearch}
         />
       )}
-      {showResults && response.length === 0 && (
-        <div className="no-results">
-          <h3>조건에 맞는 숙소가 없습니다.</h3>
-          <button onClick={handleReset}>초기 화면으로</button>
-        </div>
-      )}
-
-      {/* 반응형 디자인 */}
-      <div className="HomePC">PC</div>
-      <div className="HomeTablet">Tablet</div>
-      <div className="HomeMobile">Mobile</div>
     </div>
   );
 }

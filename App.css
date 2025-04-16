@@ -1,30 +1,6 @@
 @import "~slick-carousel/slick/slick.css";
 @import "~slick-carousel/slick/slick-theme.css";
 
-/*에니메이션 효과*/
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
-}
-
-@keyframes bounce {
-  0%   { transform: scale(1); }
-  30%  { transform: scale(0.9); }
-  50%  { transform: scale(1.1); }
-  70%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
-}
-
 /* 전체 앱 스타일 */
 .App {
   text-align: center;
@@ -54,71 +30,81 @@
 }
 
 /* 조건 리스트 전체 스타일 */
+
 .menu ul {
   list-style-type: none;
-  padding: 0;
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
+  flex-direction: column; /* 모바일에서는 세로 정렬 */
+  gap: 12px; /* 요소 간 여백 */
+  align-items: stretch;
+  padding: 0;
+  margin: 0;
 }
 
 /* 조건 항목 기본 스타일 */
 .menu ul li {
   cursor: pointer;
+  width: 100%;
   padding: 20px 15px;
   background-color: lightblue;
   margin: 10px;
-  border-radius: 10px;
+  border-radius: 8px;
   font-weight: bolder;
   font-size: 18px;
+  text-align: center;
   position: relative;
 }
 
 .menu ul li ul {
-  display: none;
-  list-style-type: none;
-  padding: 20px 15px;
-  margin: 15px;
-  font-size: 26px;
-  background-color: lightgray;
-  color: black;
-  border-radius: 10px;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: 250px;
   display: grid;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  max-width: 340px;
+  max-height: 80vh;          /* ✅ 모바일 기준 전체 높이 제한 */
+  overflow-y: auto;          /* ✅ 목록이 넘치면 스크롤 */
   grid-template-columns: 1fr 1fr;
-  z-index: 10;
+  justify-items: center;
+  background-color: gray;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.4);
+  z-index: 1000;
 }
 
-.menu ul li:hover ul {
-  display: grid;
-}
-
+/* 항목 스타일 */
 .menu ul li ul li {
-  padding: 10px;
-  background-color: lightgray;
-  margin: 5px 0;
-  font-size: 20px;
+  list-style: none;
+  background-color: white;
+  padding: 16px;
+  margin: 6px;
+  font-size: 22px;
+  min-width: 120px;
+  max-width: 140px;
+  text-align: center;
+  border-radius: 10px;
+  box-sizing: border-box;
 }
 
-.menu ul li.active {
-  background-color: darkblue;
-  color: white;
+.menu ul li ul.open {
+  display: grid;
 }
 
 /* 요청사항 입력창 스타일 */
 .query-container {
-  margin-top: 30px;
+  margin-top: 24px;
   display: flex;
-  justify-content: center;
-  align-items: center;
   flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .query-input {
-  width: 90%;
+  width: 100%;
   height: 120px;
   padding: 15px;
   font-size: 18px;
@@ -127,26 +113,15 @@
   box-sizing: border-box;
 }
 
-/* 검색 버튼 스타일 */
 .query-button {
-  display: block;
-  width: 90%;
-  margin-top: 20px;
+  width: 100%;
   padding: 15px;
   font-size: 18px;
-  border: none;
-  border-radius: 10px;
   background-color: black;
   color: white;
+  border-radius: 10px;
   cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.reset-button:active,
-.result-card button:active,
-.slider-controls button:active,
-.menu ul li:active {
-  animation: bounce 0.3s;
+  border: none;
 }
 
 /* 되물음 창 스타일 */
@@ -185,6 +160,7 @@
 }
 .popup-buttons {
   display: flex;
+  flex-direction: row;
   justify-content: center;
   gap: 40px;
   margin-top: 30px;
@@ -261,70 +237,33 @@
 .results-section {
   padding: 40px 20px 120px;
   background-color: #f9f9f9;
-  text-align: center;
+  text-align: left;
   position: relative;
 }
 
-.slider-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-
-.slider-controls button {
-  background-color: #eee;
-  border: none;
-  padding: 10px 16px;
-  font-size: 24px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
+/* 숙소 카드 */
 .result-card {
   width: 90%;
   max-width: 600px;
   background: white;
   border-radius: 16px;
   padding: 20px;
+  margin: 0 auto 30px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  text-align: center;
-  opacity: 0;
-  animation: slideInRight 0.5s ease forwards;
+  animation: fadeIn 0.5s ease forwards;
 }
 
-.result-card h2 {
+.result-card h3 {
   font-size: 24px;
-  margin-bottom: 16px;
-}
-
-.result-card img {
-  width: 100%;
-  height: auto;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  opacity: 0;
-  animation: fadeIn 1s ease forwards;
-  animation-delay: 0.2s;
+  margin-bottom: 10px;
 }
 
 .result-card p {
-  font-size: 16px;
-  margin-bottom: 12px;
+  font-size: 18px;
+  margin-bottom: 8px;
 }
 
-.result-card button {
-  padding: 10px 20px;
-  font-size: 16px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
+/* 조건 다시 보기 버튼 */
 .result-actions {
   position: fixed;
   bottom: 20px;
@@ -334,6 +273,14 @@
   justify-content: center;
   gap: 40px;
   z-index: 999;
+}
+
+.result-actions button {
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
 }
 
 .reset-button,
@@ -349,6 +296,7 @@
 /* Return 버튼 스타일 */
 .reset-button {
   background-color: lightcoral;
+  color: white;
 }
 
 /* 음성 안내 버튼 스타일 */
