@@ -19,6 +19,7 @@ function App() {
   const [showResults, setShowResults] = useState(false);
   const [error, setError] = useState('');
   const [micDenied, setMicDenied] = useState(false); // 마이크 차단 여부 -default 상태: 허용
+  const [matchedNouns, setMatchedNouns] = useState([]); // 핵심 명사 목록
 
   // 음성 인식 객체를 저장할 ref
   const recognitionRef = useRef(null);
@@ -55,10 +56,18 @@ function App() {
 
   // 지역과 인원 추출
   const extractRegionPeople = useCallback((text) => {
-    const peopleMatch = text.match(/[0-9]+명/);
-    const regionMatch = regions.find(r => text.includes(r)); // 바깥 변수 regions 사용
-    if (regionMatch) setSelectedRegion(regionMatch);
-    if (peopleMatch) setSelectedPeople(peopleMatch[0]);
+    const regionMatch = regions.find(r => text.includes(r.replace('시', '').replace('군', '')) || text.includes(r));
+    const peopleMatch = text.match(/[0-9]+(명|사람)/);
+  
+    if (regionMatch) {
+      setSelectedRegion(regionMatch);
+      console.log('지역 추출됨:', regionMatch);
+    }
+    if (peopleMatch) {
+      const p = peopleMatch[0].replace('사람', '명');
+      setSelectedPeople(p);
+      console.log('인원 추출됨:', p);
+    }
   }, [regions]);
   
   // 조건 추출
@@ -79,43 +88,66 @@ function App() {
     return properNouns.filter(noun => text.includes(noun)); // 명사 목록에서 필터링
   }, []);
 
-  // 음성 인식 시작
-  const startVoiceRecognition = useCallback(() => {
-    const processVoiceInput = (text) => {
-      setQuery(text);
-      extractRegionPeople(text);
-      extractConditions(text);
-      extractProperNouns(text);
-      setIsPopupVisible(true);
-    };
+  // 음성 인식 결과 처리
+  // 쿼리, 지역, 인원, 조건, 핵심어 추출
+  const processVoiceInput = (text) => {
+    console.log('🎤 음성 텍스트:', text);
+    setQuery(text); // 음성 인식 결과를 쿼리에 설정
+    extractRegionPeople(text); // 지역과 인원 추출
+    extractConditions(text); // 조건 추출
+    const nouns = extractProperNouns(text); // 핵심어 추출
+    setMatchedNouns(nouns);
+    console.log('🧠 핵심어 추출됨:', nouns);
 
-    // 마이크 허용 여부 확인
+    const hasRegion = regions.some(r => text.includes(r.replace('시', '').replace('군', '')) || text.includes(r));
+    const hasPeople = /[0-9]+(명|사람)/.test(text);
+    const hasCondition = Object.values(keywordMap).some(keywords => keywords.some(k => text.includes(k)));
+
+    if (hasRegion || hasPeople || hasCondition) {
+      setIsPopupVisible(true);
+    } else {
+      setError('조건, 지역, 인원 중 하나 이상을 말씀해 주세요.');
+    }
+  };
+
+  // 음성 인식 시작
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const startVoiceRecognition = useCallback(() => {
+    if (recognitionRef.current) recognitionRef.current.abort();
+
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(() => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; // 음성 인식 API
         if (!SpeechRecognition) {
-          console.warn('이 브라우저는 음성 인식을 지원하지 않습니다.');
           setMicDenied(true);
           return;
         }
+        try {
+          const recognition = new SpeechRecognition(); // 음성 인식 객체 생성
+          recognition.lang = 'ko-KR';
+          recognition.interimResults = false;
+          recognition.continuous = false;
 
-        // 음성 인식 설정
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'ko-KR';
-        recognition.interimResults = false;
-        recognition.continuous = false;
+          // 음성 인식 결과 처리
+          recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            console.log('🎙 음성 인식 완료:', transcript);
+            processVoiceInput(transcript);
+          };
 
-        // 음성 인식 결과 처리
-        recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          processVoiceInput(transcript);
-        };
+          // 음성 인식 종료 시
+          recognition.onerror = (e) => {
+            if (e.error !== 'aborted') console.error('⚠ 음성 인식 오류:', e);
+          };
 
-        recognitionRef.current = recognition;
-        recognition.start();
+          recognitionRef.current = recognition; // 음성 인식 객체 저장
+          recognition.start(); // 음성 인식 시작
+        } catch (error) {
+          console.error('🚨 음성 인식 시작 실패:', error);
+        }
       })
-    .catch(() => {
-      setMicDenied(true);
+      .catch(() => {
+        setMicDenied(true);
       });
   }, [extractRegionPeople, extractConditions, extractProperNouns]);
 
@@ -134,7 +166,8 @@ function App() {
   }, [selectedRegion, selectedPeople, query, extractConditions, extractProperNouns]);
 
   // 숙소 추천 요청
-  const handleConfirm = useCallback(async () => { /* 오타 교정 */
+  const handleConfirm = useCallback(async () => {
+    // 오타 교정
     const correctTypos = (text) => {
       const corrections = {
         '잇ㅅ어요': '있어요',
@@ -148,44 +181,42 @@ function App() {
         '짐보관': '짐 보관',
         '보조건': '보조견'
       };
-      let corrected = text;
-      for (const typo in corrections) { // 오타 교정
-        const regex = new RegExp(typo, 'g');
-        corrected = corrected.replace(regex, corrections[typo]); // 정규 표현식 사용
+      let corrected = text; // 원본 텍스트를 복사
+      for (const typo in corrections) { // 오타 목록을 순회
+        const regex = new RegExp(typo, 'g'); // 정규 표현식으로 오타 찾기
+        corrected = corrected.replace(regex, corrections[typo]); // 오타 교정
       }
       return corrected;
     };
-    
-    const correctedQuery = correctTypos(query);
-    const matchedNouns = extractProperNouns(correctedQuery); // ✅ 핵심 명사 추출
-    
-    /* 백엔드로 정보 요청 */
-    const fetchRecommendations = async (correctedQuery, matchedNouns) => {
+  
+    const correctedQuery = correctTypos(query); //오타 교정된 쿼리
+  
+    try {
+      // 백엔드로 API 요청 양식
       const res = await axios.post(`{API_URL}/api/recommend`, {
         query: correctedQuery,
         region: selectedRegion,
         people: selectedPeople,
         conditions,
-        properNouns: matchedNouns
+        properNouns: matchedNouns   // ✅ 핵심어 함께 전송
       });
-      return res.data.results;
-    };
-    
-    // ✅ 백엔드 API 호출
-    try {
-      const results = await fetchRecommendations(correctedQuery, matchedNouns); 
+  
+      const results = res.data.results;
       if (results.length === 0) {
         setError('조건에 맞는 숙소가 없습니다.');
         return;
       }
+  
       setResponse(results);
-      setShowResults(true); // 검색 결과
+      setShowResults(true);
       setIsPopupVisible(false);
-      setViewRange(0); // 초기화
+      setViewRange(0);
+
     } catch (error) {
       console.error('Error:', error);
     }
-  }, [query, conditions, selectedRegion, selectedPeople, extractProperNouns]);
+  }, [query, selectedRegion, selectedPeople, conditions, matchedNouns]);
+  
 
 
   // 팝업 취소
@@ -226,30 +257,41 @@ function App() {
 
   // Popup 열릴 때 "네 / 아니오" 음성 인식
   useEffect(() => {
-
-    // 마이크 차단 시 음성 인식 X
     if (!isPopupVisible || micDenied) return;
   
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    // 음성 인식 지원 여부 확인
     if (!SpeechRecognition) return;
   
-    const recognition = new SpeechRecognition(); // 음성 인식 객체 생성
-    recognition.lang = 'ko-KR'; // 한국어 설정
-    recognition.interimResults = false; // 중간 결과 비활성화
-    recognition.continuous = false; // 연속 인식 비활성화
+    // ✅ 기존 인식 종료
+    if (recognitionRef.current) {
+      recognitionRef.current.abort();
+    }
   
-    // 음성 인식 결과 처리
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript.trim().toLowerCase();
-      if (transcript.includes("네")) handleConfirm();
-      else if (transcript.includes("아니오")) handleCancel();
-    };
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ko-KR';
+      recognition.interimResults = false;
+      recognition.continuous = false;
   
-    recognition.start();
-    return () => recognition.abort();
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript.trim().toLowerCase();
+        if (transcript.includes("네")) handleConfirm();
+        else if (transcript.includes("아니오")) handleCancel();
+      };
+  
+      recognition.onerror = (e) => {
+        console.error('팝업 내 음성 인식 오류:', e);
+      };
+  
+      recognition.start();
+      recognitionRef.current = recognition;
+  
+      return () => recognition.abort();
+    } catch (error) {
+      console.error('팝업 음성 인식 시작 중 오류:', error);
+    }
   }, [isPopupVisible, micDenied, handleConfirm, handleCancel]);
+  
 
   return (
     <div className="App">
