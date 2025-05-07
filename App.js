@@ -7,6 +7,7 @@ import ResultList from './ResultList';
 import properNouns from './properNouns.json';
 
 function App() {
+  // 지역, 인원, 쿼리, 응답, 뷰 범위, 팝업 상태, 드롭다운 상태, 결과 상태, 에러 메시지
   const [selectedRegion, setSelectedRegion] = useState('지역');
   const [selectedPeople, setSelectedPeople] = useState('인원');
   const [query, setQuery] = useState('');
@@ -19,8 +20,10 @@ function App() {
   const [error, setError] = useState('');
   const [micDenied, setMicDenied] = useState(false); // 마이크 차단 여부 -default 상태: 허용
 
+  // 음성 인식 객체를 저장할 ref
   const recognitionRef = useRef(null);
 
+  // 지역 목록
   const regions = useMemo(() => (
     [
       '춘천시', '원주시', '강릉시', '동해시', '태백시', '속초시', '삼척시',
@@ -28,10 +31,7 @@ function App() {
     ]
   ), []);
 
-  const extractProperNouns = useCallback((text) => {
-    return properNouns.filter(noun => text.includes(noun));
-  }, []);
-
+  // 조건 초기화
   const [conditions, setConditions] = useState({
     wheelchair: false,
     elevator: false,
@@ -41,17 +41,19 @@ function App() {
     dog: false
   });
   
+  // 조건 키워드 매핑
+  // useMemo를 사용하여 조건 키워드 매핑
   const keywordMap = useMemo(() => ({
     wheelchair: ['휠체어', '휠체어 대여'],
     elevator: ['엘리베이터', '엘베', '승강기', '장애인용 엘리베이터'],
-    ramp: ['경사로', '계단 없는'],
-    parking: ['장애인 주차장', '장애인용 주차장'],
+    ramp: ['경사로', '계단 없는', '단차'],
+    parking: ['주차장', '장애인 주차장', '장애인용 주차장'],
     assistant: ['안내요원'],
     dog: ['보조견', '반려견', '동반 가능']
   }), []);
   
 
-  // 음성 인식 시작
+  // 지역과 인원 추출
   const extractRegionPeople = useCallback((text) => {
     const peopleMatch = text.match(/[0-9]+명/);
     const regionMatch = regions.find(r => text.includes(r)); // 바깥 변수 regions 사용
@@ -59,6 +61,7 @@ function App() {
     if (peopleMatch) setSelectedPeople(peopleMatch[0]);
   }, [regions]);
   
+  // 조건 추출
   const extractConditions = useCallback((text) => {
     setConditions(prev => {
       const updated = { ...prev };
@@ -71,16 +74,22 @@ function App() {
     });
   }, [keywordMap]);
   
-  
+  // 핵심 명사 추출
+  const extractProperNouns = useCallback((text) => {
+    return properNouns.filter(noun => text.includes(noun)); // 명사 목록에서 필터링
+  }, []);
 
+  // 음성 인식 시작
   const startVoiceRecognition = useCallback(() => {
     const processVoiceInput = (text) => {
       setQuery(text);
       extractRegionPeople(text);
       extractConditions(text);
+      extractProperNouns(text);
       setIsPopupVisible(true);
     };
 
+    // 마이크 허용 여부 확인
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -90,11 +99,13 @@ function App() {
           return;
         }
 
+        // 음성 인식 설정
         const recognition = new SpeechRecognition();
         recognition.lang = 'ko-KR';
         recognition.interimResults = false;
         recognition.continuous = false;
 
+        // 음성 인식 결과 처리
         recognition.onresult = (event) => {
           const transcript = event.results[0][0].transcript;
           processVoiceInput(transcript);
@@ -106,20 +117,23 @@ function App() {
     .catch(() => {
       setMicDenied(true);
       });
-  }, [extractRegionPeople, extractConditions]);
+  }, [extractRegionPeople, extractConditions, extractProperNouns]);
 
-
-
+  // 쿼리 작성 (마이크 허용 X 시)
   const handleQuerySubmit = useCallback(() => {
     if (selectedRegion === '지역' || selectedPeople === '인원') {
       setError('지역과 인원을 입력해 주세요.');
       return;
     }
+    // 쿼리에서 지역과 인원 추출
     extractConditions(query);
+    // 쿼리에서 조건 추출
+    extractProperNouns(query);
     setError('');
     setIsPopupVisible(true);
-  }, [selectedRegion, selectedPeople, query, extractConditions]);
+  }, [selectedRegion, selectedPeople, query, extractConditions, extractProperNouns]);
 
+  // 숙소 추천 요청
   const handleConfirm = useCallback(async () => { /* 오타 교정 */
     const correctTypos = (text) => {
       const corrections = {
@@ -135,9 +149,9 @@ function App() {
         '보조건': '보조견'
       };
       let corrected = text;
-      for (const typo in corrections) {
+      for (const typo in corrections) { // 오타 교정
         const regex = new RegExp(typo, 'g');
-        corrected = corrected.replace(regex, corrections[typo]);
+        corrected = corrected.replace(regex, corrections[typo]); // 정규 표현식 사용
       }
       return corrected;
     };
@@ -157,27 +171,32 @@ function App() {
       return res.data.results;
     };
     
+    // ✅ 백엔드 API 호출
     try {
-      const results = await fetchRecommendations(correctedQuery, matchedNouns);
+      const results = await fetchRecommendations(correctedQuery, matchedNouns); 
       if (results.length === 0) {
         setError('조건에 맞는 숙소가 없습니다.');
         return;
       }
       setResponse(results);
-      setShowResults(true);
+      setShowResults(true); // 검색 결과
       setIsPopupVisible(false);
-      setViewRange(0);
+      setViewRange(0); // 초기화
     } catch (error) {
       console.error('Error:', error);
     }
   }, [query, conditions, selectedRegion, selectedPeople, extractProperNouns]);
 
 
+  // 팝업 취소
+  // 마이크 허용 시 음성 인식 재시작
+  // 마이크 차단 시 음성 인식 재시작 X
   const handleCancel = useCallback(() => {
     setIsPopupVisible(false);
     if (!micDenied) startVoiceRecognition(); // 마이크 허용 시, 음성 인식 재시작
   }, [micDenied, startVoiceRecognition]);
 
+  // 숙소 추천 재검색
   const handleResearch = () => {
     const next = (viewRange + 1) * 3;
     if (next >= response.length) {
@@ -187,6 +206,8 @@ function App() {
     setViewRange(viewRange + 1);
   };
 
+  // 숙소 추천 초기화
+  // 마이크 허용 시 음성 인식 재시작
   const handleReset = () => {
     setSelectedRegion('지역');
     setSelectedPeople('인원');
@@ -198,22 +219,28 @@ function App() {
     if (!micDenied) startVoiceRecognition();
   };
 
+  // 마이크 허용 시 음성 인식 시작
   useEffect(() => {
     startVoiceRecognition();
   }, [startVoiceRecognition]);
 
   // Popup 열릴 때 "네 / 아니오" 음성 인식
   useEffect(() => {
+
+    // 마이크 차단 시 음성 인식 X
     if (!isPopupVisible || micDenied) return;
   
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    // 음성 인식 지원 여부 확인
     if (!SpeechRecognition) return;
   
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'ko-KR';
-    recognition.interimResults = false;
-    recognition.continuous = false;
+    const recognition = new SpeechRecognition(); // 음성 인식 객체 생성
+    recognition.lang = 'ko-KR'; // 한국어 설정
+    recognition.interimResults = false; // 중간 결과 비활성화
+    recognition.continuous = false; // 연속 인식 비활성화
   
+    // 음성 인식 결과 처리
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript.trim().toLowerCase();
       if (transcript.includes("네")) handleConfirm();
@@ -227,7 +254,7 @@ function App() {
   return (
     <div className="App">
       <div className="Title">
-        <h3>SilverStay<span>노약자 & 장애인분들을 위한 강원도 숙소 가이드</span></h3>
+        <h3>SilverStay<span>노약자 & 장애인 전용 강원도 숙소 가이드</span></h3>
       </div>
 
       {!showResults && (
@@ -285,6 +312,7 @@ function App() {
         </div>
       )}
 
+      {/* 결과 */}
       {isPopupVisible && (
         <ConfirmationPopup
           region={selectedRegion}
@@ -296,6 +324,15 @@ function App() {
         />
       )}
 
+      {/* 검색 결과 */}
+      {showResults && (
+        <div className="result-header">
+          <h3>추천 숙소</h3>
+          <p>총 {response.length}개 숙소가 검색되었습니다.</p>
+        </div>
+      )}
+      
+      {/* 검색 결과 리스트 */}
       {showResults && (
         <ResultList
           hotels={response.slice(viewRange * 3, viewRange * 3 + 3)}
