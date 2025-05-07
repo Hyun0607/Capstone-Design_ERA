@@ -7,16 +7,27 @@ import './App.css';
 function ConfirmationPopup({ region, people, conditions, query, onConfirm, onCancel }) {
   // 조건을 렌더링하는 함수 & 조건이 없을 경우 출력 X
   const renderConditions = () => {
-    if (!Object.values(conditions).some(v => v)) return null;
+    const visibleConditions = {
+      wheelchair: '휠체어 접근 가능',
+      elevator: '엘리베이터 있음',
+      ramp: '경사로 있음',
+      parking: '장애인 주차장',
+      assistant: '안내요원 도움 가능'
+    };
+
+    const activeKeys = Object.entries(conditions)
+      .filter(([_, value]) => value)
+      .map(([key]) => visibleConditions[key]);
+
+    if (activeKeys.length === 0) return null;
 
     return (
       <>
         <p><strong>조건:</strong></p>
         <ul>
-          {conditions.luggage && <li>짐 보관 가능</li>}
-          {conditions.pets && <li>반려동물 동반 가능</li>}
-          {conditions.wheelchair && <li>휠체어 접근 가능</li>}
-          {conditions.trail && <li>산책로 있음</li>}
+          {activeKeys.map((label, idx) => (
+            <li key={idx}>{label}</li>
+          ))}
         </ul>
       </>
     );
@@ -31,23 +42,22 @@ function ConfirmationPopup({ region, people, conditions, query, onConfirm, onCan
       className="confirmation-popup"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="popup-title"
-      aria-describedby="popup-desc"
     >
       <div className="popup-content">
         <h2 id="popup-title">입력한 내용이 맞으신가요?</h2>
-        <p>숙소를 추천하기 위해 아래 정보를 확인해 주세요.</p>
+        <p>숙소를 추천하기 위해<br></br> 아래 정보를 확인해 주세요.</p>
 
         {/* 지역, 인원, 조건을 보여주는 부분 */}
-        <div id="popup-desc">
-          <p><strong>지역:</strong> {region}</p>
-          <p><strong>인원:</strong> {people}</p>
+        
+          <p><strong>지역 :</strong> {region}</p>
+          <p><strong>인원 :</strong> {people}</p>
 
           {renderConditions()}
           
           <p><strong>입력하신 내용:</strong> {query}</p>
-        </div>
-
+        <p>위 내용으로 검색을 진행하시겠습니까?</p>
+        
+        {/* 확인 및 취소 버튼 */}
         <div className="popup-buttons">
           <button
             className="confirm-button"

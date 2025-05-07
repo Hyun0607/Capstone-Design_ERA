@@ -5,19 +5,70 @@ import React from 'react';
 // 음성 안내 기능을 추가하여 사용자가 숙소 정보를 음성으로 들을 수 있도록 함
 
 function ResultList({ hotels, onReset, onResearch }) {
-  const handleVoiceGuide = () => {
-    if (!hotels || hotels.length === 0) return;
-    const text = hotels
-      .map((hotel, idx) =>
-        `${idx + 1}번 숙소, ${hotel.name}, 위치는 ${hotel.region}, 설명: ${hotel.description}`
-      )
-      .join('. ');
+  const handleVoiceGuide = () => { //결과 음성 안내 기능
+    if (!window.speechSynthesis) {
+      alert('음성 안내 기능을 지원하지 않는 브라우저입니다.');
+      return;
+    }
 
-    // 음성 합성 API로 안내
+    // 음성 안내 기능을 지원하는 경우
+    if (!hotels || hotels.length === 0) return;
+  
+    const text = hotels.map((hotel, idx) => {
+      const conditionText = hotel.conditions?.length > 0
+        ? `조건으로는 ${hotel.conditions.join(', ')} 이 있습니다`
+        : '조건 정보는 없습니다';
+  
+      const keywordText = hotel.properNouns?.length > 0
+        ? `포함된 키워드는 ${hotel.properNouns.join(', ')} 입니다`
+        : '';
+  
+      return `${idx + 1}번 숙소, ${hotel.name}, 위치는 ${hotel.region}. ${conditionText}. ${keywordText}. 개요는 다음과 같습니다. ${hotel.description}`;
+    }).join('. 다음 숙소는, ');
+  
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ko-KR';
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
+    window.speechSynthesis.cancel();  // 기존 음성 종료
+    window.speechSynthesis.speak(utterance); // 읽기 시작
+  };
+  
+
+  const renderConditionTags = (condList = []) => {
+    return condList.map((cond, idx) => (
+      <span
+        key={idx}
+        style={{
+          display: 'inline-block',
+          backgroundColor: '#eee',
+          padding: '4px 8px',
+          marginRight: '6px',
+          borderRadius: '8px',
+          fontSize: '14px'
+        }}
+      >
+        {cond}
+      </span>
+    ));
+  };
+
+  const renderNounTags = (nounList = []) => {
+    return nounList.map((noun, idx) => (
+      <span
+        key={idx}
+        style={{
+          display: 'inline-block',
+          backgroundColor: '#d9f2e6',
+          padding: '4px 8px',
+          marginRight: '6px',
+          borderRadius: '8px',
+          fontSize: '14px',
+          color: '#14733f',
+          border: '1px solid #14733f'
+        }}
+      >
+        {noun}
+      </span>
+    ));
   };
 
   return (
@@ -41,18 +92,21 @@ function ResultList({ hotels, onReset, onResearch }) {
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
             }}
           >
-            <h3>{hotel.name} ({hotel.region})</h3>
+            {/* 숙소 이름과 지역 */}
+            <h3>{hotel.name} ({hotel.region})</h3> 
+            {/* 숙소 개요 (백엔드에서 개요 넘겨줌) */}
             <p>{hotel.description}</p>
-            <p><strong>조건:</strong> {hotel.conditions?.join(', ') || '없음'}</p>
-            
-            {/* 숙소 이미지 (alt 포함하여 시각장애인 대응) */}
-            {hotel.imageUrl && (
-              <img
-                src={hotel.imageUrl}
-                alt={`${hotel.name} 숙소 이미지`}
-                style={{ width: '100%', borderRadius: '8px', marginTop: '10px' }}
-              />
+            {/* 숙소 조건 */}
+            <p><strong>조건:</strong> 
+            {renderConditionTags(hotel.conditions)}
+            {/* 검색 결과 키워드 */}
+            {hotel.properNouns?.length > 0 && (
+            <div style={{ marginTop: '8px' }}>
+            <strong>포함된 키워드:</strong> {renderNounTags(hotel.properNouns)}
+            </div>
             )}
+            </p>
+            
           </li>
         ))}
       </ul>
@@ -68,7 +122,7 @@ function ResultList({ hotels, onReset, onResearch }) {
         <button
           className="query-button"
           onClick={onResearch}
-          aria-label="다음 숙소 추천 받기"
+          aria-label="다른 숙소 추천 받기"
         >
           다른 숙소
         </button>

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import axios from 'axios';
 import ConfirmationPopup from './Popup';
 import ResultList from './ResultList';
+import properNouns from './properNouns.json';
 
 function App() {
   const [selectedRegion, setSelectedRegion] = useState('지역');
@@ -27,6 +28,29 @@ function App() {
     ]
   ), []);
 
+  const extractProperNouns = useCallback((text) => {
+    return properNouns.filter(noun => text.includes(noun));
+  }, []);
+
+  const [conditions, setConditions] = useState({
+    wheelchair: false,
+    elevator: false,
+    ramp: false,
+    parking: false,
+    assistant: false,
+    dog: false
+  });
+  
+  const keywordMap = useMemo(() => ({
+    wheelchair: ['휠체어', '휠체어 대여'],
+    elevator: ['엘리베이터', '엘베', '승강기', '장애인용 엘리베이터'],
+    ramp: ['경사로', '계단 없는'],
+    parking: ['장애인 주차장', '장애인용 주차장'],
+    assistant: ['안내요원'],
+    dog: ['보조견', '반려견', '동반 가능']
+  }), []);
+  
+
   // 음성 인식 시작
   const extractRegionPeople = useCallback((text) => {
     const peopleMatch = text.match(/[0-9]+명/);
@@ -35,11 +59,25 @@ function App() {
     if (peopleMatch) setSelectedPeople(peopleMatch[0]);
   }, [regions]);
   
+  const extractConditions = useCallback((text) => {
+    setConditions(prev => {
+      const updated = { ...prev };
+      Object.entries(keywordMap).forEach(([key, keywords]) => {
+        if (keywords.some(word => text.includes(word))) {
+          updated[key] = true;
+        }
+      });
+      return updated;
+    });
+  }, [keywordMap]);
+  
+  
 
   const startVoiceRecognition = useCallback(() => {
     const processVoiceInput = (text) => {
       setQuery(text);
       extractRegionPeople(text);
+      extractConditions(text);
       setIsPopupVisible(true);
     };
 
@@ -68,7 +106,7 @@ function App() {
     .catch(() => {
       setMicDenied(true);
       });
-  }, [extractRegionPeople]);
+  }, [extractRegionPeople, extractConditions]);
 
 
 
@@ -77,9 +115,10 @@ function App() {
       setError('지역과 인원을 입력해 주세요.');
       return;
     }
+    extractConditions(query);
     setError('');
     setIsPopupVisible(true);
-  }, [selectedRegion, selectedPeople]);
+  }, [selectedRegion, selectedPeople, query, extractConditions]);
 
   const handleConfirm = useCallback(async () => { /* 오타 교정 */
     const correctTypos = (text) => {
@@ -87,9 +126,13 @@ function App() {
         '잇ㅅ어요': '있어요',
         '없써요': '없어요',
         '휠체ㅓ': '휠체어',
-        '반려도물': '반려동물',
+        '휠체어대여': '휠체어 대여',
+        '엘리베이타': '엘리베이터',
+        '엘베이터': '엘리베이터',
+        '장애인주차장': '장애인 주차장',
         '가깝은': '가까운',
-        '짐보관': '짐 보관'
+        '짐보관': '짐 보관',
+        '보조건': '보조견'
       };
       let corrected = text;
       for (const typo in corrections) {
@@ -98,19 +141,28 @@ function App() {
       }
       return corrected;
     };
-
-    const fetchRecommendations = async (correctedQuery) => { /* 백엔드로 정보 요청 */
-      const res = await axios.post('https://c1a9-34-125-147-207.ngrok-free.app/recommend', {
+    
+    const correctedQuery = correctTypos(query);
+    const matchedNouns = extractProperNouns(correctedQuery); // ✅ 핵심 명사 추출
+    
+    /* 백엔드로 정보 요청 */
+    const fetchRecommendations = async (correctedQuery, matchedNouns) => {
+      const res = await axios.post(`{API_URL}/api/recommend`, {
         query: correctedQuery,
         region: selectedRegion,
         people: selectedPeople,
+        conditions,
+        properNouns: matchedNouns
       });
       return res.data.results;
     };
-
-    const correctedQuery = correctTypos(query);
+    
     try {
-      const results = await fetchRecommendations(correctedQuery);
+      const results = await fetchRecommendations(correctedQuery, matchedNouns);
+      if (results.length === 0) {
+        setError('조건에 맞는 숙소가 없습니다.');
+        return;
+      }
       setResponse(results);
       setShowResults(true);
       setIsPopupVisible(false);
@@ -118,7 +170,7 @@ function App() {
     } catch (error) {
       console.error('Error:', error);
     }
-  }, [query, selectedRegion, selectedPeople]);
+  }, [query, conditions, selectedRegion, selectedPeople, extractProperNouns]);
 
 
   const handleCancel = useCallback(() => {
@@ -238,7 +290,7 @@ function App() {
           region={selectedRegion}
           people={selectedPeople}
           query={query}
-          conditions={{}} 
+          conditions={conditions} 
           onConfirm={handleConfirm}
           onCancel={handleCancel}
         />
