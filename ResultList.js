@@ -33,43 +33,7 @@ function ResultList({ hotels, onReset, onResearch }) {
   };
   
 
-  const renderConditionTags = (condList = []) => {
-    return condList.map((cond, idx) => (
-      <span
-        key={idx}
-        style={{
-          display: 'inline-block',
-          backgroundColor: '#eee',
-          padding: '4px 8px',
-          marginRight: '6px',
-          borderRadius: '8px',
-          fontSize: '14px'
-        }}
-      >
-        {cond}
-      </span>
-    ));
-  };
-
-  const renderNounTags = (nounList = []) => {
-    return nounList.map((noun, idx) => (
-      <span
-        key={idx}
-        style={{
-          display: 'inline-block',
-          backgroundColor: '#d9f2e6',
-          padding: '4px 8px',
-          marginRight: '6px',
-          borderRadius: '8px',
-          fontSize: '14px',
-          color: '#14733f',
-          border: '1px solid #14733f'
-        }}
-      >
-        {noun}
-      </span>
-    ));
-  };
+  
 
   return (
     <div className="results-section" id="results-section">
@@ -83,7 +47,7 @@ function ResultList({ hotels, onReset, onResearch }) {
           <li
             key={index}
             tabIndex={0}
-            aria-label={`${hotel.name} 숙소. 위치는 ${hotel.region}. 조건: ${hotel.conditions?.join(', ') || '없음'}. 설명: ${hotel.description}`}
+            aria-label={`${hotel.name} 숙소. 주소: ${hotel.description}`}
             style={{
               background: 'white',
               borderRadius: '12px',
@@ -93,20 +57,10 @@ function ResultList({ hotels, onReset, onResearch }) {
             }}
           >
             {/* 숙소 이름과 지역 */}
-            <h3>{hotel.name} ({hotel.region})</h3> 
-            {/* 숙소 개요 (백엔드에서 개요 넘겨줌) */}
-            <p>{hotel.description}</p>
-            {/* 숙소 조건 */}
-            <p><strong>조건:</strong> 
-            {renderConditionTags(hotel.conditions)}
-            {/* 검색 결과 키워드 */}
-            {hotel.properNouns?.length > 0 && (
-            <div style={{ marginTop: '8px' }}>
-            <strong>포함된 키워드:</strong> {renderNounTags(hotel.properNouns)}
-            </div>
-            )}
-            </p>
+            <h3>{hotel.name}</h3> 
             
+            {/* 숙소 개요 (백엔드에서 개요 넘겨줌) */}
+            <h4>{hotel.description}</h4>
           </li>
         ))}
       </ul>
