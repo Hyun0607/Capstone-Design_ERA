@@ -57,10 +57,10 @@ function ResultList({ hotels, onReset, onResearch }) {
             }}
           >
             {/* 숙소 이름과 지역 */}
-            <h3>{hotel.name}</h3> 
+            <h3>숙소명 : {hotel.name}</h3> 
             
-            {/* 숙소 개요 (백엔드에서 개요 넘겨줌) */}
-            <h4>{hotel.description}</h4>
+            {/* 숙소 주소 (백엔드에서 주소 넘겨줌) */}
+            <h4>주소 : {hotel.description}</h4>
           </li>
         ))}
       </ul>
