@@ -241,16 +241,35 @@
   position: relative;
 }
 
-/* 숙소 카드 */
-.result-card {
-  width: 90%;
+.results-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.results-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
   max-width: 600px;
+}
+
+.nav-button {
+  font-size: 24px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: white;
+  border: 1px solid #ccc;
+}
+
+.result-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 12px;
   padding: 20px;
-  margin: 0 auto 30px;
+  margin-bottom: 20px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  animation: fadeIn 0.5s ease forwards;
 }
 
 .result-card h3 {
@@ -258,10 +277,9 @@
   margin-bottom: 10px;
 }
 
-.result-card p {
-  font-size: 18px;
-  margin-bottom: 8px;
-}
+
+
+
 
 /* 조건 다시 보기 버튼 */
 .result-actions {
@@ -293,7 +311,7 @@
   transition: transform 0.2s ease;
 }
 
-/* Return 버튼 스타일 */
+/* '첫 화면으로' 버튼 스타일 */
 .reset-button {
   background-color: lightcoral;
   color: white;

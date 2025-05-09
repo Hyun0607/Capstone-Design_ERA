@@ -88,7 +88,7 @@ function App() {
     return properNouns.filter(noun => text.includes(noun)); // 명사 목록에서 필터링
   }, []);
 
-  // 음성 인식 결과 처리
+  // 음성 텍스트 입력 처리
   // 쿼리, 지역, 인원, 조건, 핵심어 추출
   const processVoiceInput = (text) => {
     console.log('🎤 음성 텍스트:', text);
@@ -135,7 +135,7 @@ function App() {
             processVoiceInput(transcript);
           };
 
-          // 음성 인식 종료 시
+          // 음성 인식 시 오류 발생
           recognition.onerror = (e) => {
             if (e.error !== 'aborted') console.error('⚠ 음성 인식 오류:', e);
           };
@@ -151,7 +151,7 @@ function App() {
       });
   }, [extractRegionPeople, extractConditions, extractProperNouns]);
 
-  // 쿼리 작성 (마이크 허용 X 시)
+  // 검색 버튼 클릭 시 동작
   const handleQuerySubmit = useCallback(() => {
     if (selectedRegion === '지역' || selectedPeople === '인원') {
       setError('지역과 인원을 입력해 주세요.');
@@ -159,13 +159,13 @@ function App() {
     }
     // 쿼리에서 지역과 인원 추출
     extractConditions(query);
-    // 쿼리에서 조건 추출
+    // 쿼리에서 고유명사 추출
     extractProperNouns(query);
     setError('');
     setIsPopupVisible(true);
   }, [selectedRegion, selectedPeople, query, extractConditions, extractProperNouns]);
 
-  // 숙소 추천 요청
+  // 숙소 추천 결과 요청
   const handleConfirm = useCallback(async () => {
     // 오타 교정
     const correctTypos = (text) => {
@@ -224,21 +224,10 @@ function App() {
   // 마이크 차단 시 음성 인식 재시작 X
   const handleCancel = useCallback(() => {
     setIsPopupVisible(false);
-    if (!micDenied) startVoiceRecognition(); // 마이크 허용 시, 음성 인식 재시작
+    if (!micDenied) startVoiceRecognition();
   }, [micDenied, startVoiceRecognition]);
 
-  // 숙소 추천 재검색
-  const handleResearch = () => {
-    const next = (viewRange + 1) * 3;
-    if (next >= response.length) {
-      alert('더 이상 숙소가 없습니다.');
-      return;
-    }
-    setViewRange(viewRange + 1);
-  };
-
-  // 숙소 추천 초기화
-  // 마이크 허용 시 음성 인식 재시작
+  // 조건 초기화 및 첫 화면으로
   const handleReset = () => {
     setSelectedRegion('지역');
     setSelectedPeople('인원');
@@ -248,6 +237,25 @@ function App() {
     setShowResults(false);
     setError('');
     if (!micDenied) startVoiceRecognition();
+  };
+
+  // ✅ 다음 숙소 보기 버튼 (>)
+  const handleNext = () => {
+    const next = (viewRange + 1) * 3;
+    if (next >= response.length) {
+      alert('더 이상 숙소가 없습니다.');
+      return;
+    }
+    setViewRange(viewRange + 1);
+  };
+
+  // ✅ 이전 숙소 보기 버튼 (<)
+  const handlePrev = () => {
+    if (viewRange === 0) {
+      alert('이전 숙소가 없습니다.');
+      return;
+    }
+    setViewRange(viewRange - 1);
   };
 
   // 마이크 허용 시 음성 인식 시작
@@ -275,8 +283,8 @@ function App() {
   
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim().toLowerCase();
-        if (transcript.includes("네")) handleConfirm();
-        else if (transcript.includes("아니오")) handleCancel();
+        if (transcript.includes("네" | "어")) handleConfirm();
+        else if (transcript.includes("아니" | "아니오")) handleCancel();
       };
   
       recognition.onerror = (e) => {
@@ -377,9 +385,11 @@ function App() {
       {/* 검색 결과 리스트 */}
       {showResults && (
         <ResultList
-          hotels={response.slice(viewRange * 3, viewRange * 3 + 3)}
+          hotels={response.slice(viewRange * 3, (viewRange + 1) * 3)}
           onReset={handleReset}
-          onResearch={handleResearch}
+          onNext={handleNext}
+          onPrev={handlePrev}
+          viewRange={viewRange}
         />
       )}
     </div>
