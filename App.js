@@ -45,13 +45,14 @@ function App() {
   // 조건 키워드 매핑
   // useMemo를 사용하여 조건 키워드 매핑
   const keywordMap = useMemo(() => ({
-    wheelchair: ['휠체어', '휠체어 대여'],
-    elevator: ['엘리베이터', '엘베', '승강기', '장애인용 엘리베이터'],
-    ramp: ['경사로', '계단 없는', '단차'],
-    parking: ['주차장', '장애인 주차장', '장애인용 주차장'],
-    assistant: ['안내요원'],
-    dog: ['보조견', '반려견', '동반 가능']
+    wheelchair: ['휠체어', '휠체어 대여', '휠체어 접근', '휠체어 이동', '휠체어 이용 가능'],
+    elevator: ['엘리베이터', '엘베', '승강기', '장애인용 엘리베이터', '리프트', '엘리베이터 있음'],
+    ramp: ['경사로', '계단 없는', '단차', '슬로프', '경사 진입', '단차 없음', '보조 출입구'],
+    parking: ['주차장', '장애인 주차장', '장애인용 주차장', '휠체어 주차', '전용 주차'],
+    assistant: ['안내요원', '안내직원', '도움 필요', '보조 필요', '직원 도움', '도우미'],
+    dog: ['보조견', '반려견', '동반 가능', '반려동물 가능', '강아지 가능', '펫 동반', '애견 동반']
   }), []);
+
   
 
   // 지역과 인원 추출
@@ -90,7 +91,7 @@ function App() {
 
   // 음성 텍스트 입력 처리
   // 쿼리, 지역, 인원, 조건, 핵심어 추출
-  const processVoiceInput = (text) => {
+  const processVoiceInput = useCallback((text) => {
     console.log('🎤 음성 텍스트:', text);
     setQuery(text); // 음성 인식 결과를 쿼리에 설정
     extractRegionPeople(text); // 지역과 인원 추출
@@ -103,20 +104,25 @@ function App() {
     const hasPeople = /[0-9]+(명|사람)/.test(text);
     const hasCondition = Object.values(keywordMap).some(keywords => keywords.some(k => text.includes(k)));
 
-    if (hasRegion || hasPeople || hasCondition) {
+    if (hasRegion || hasPeople || hasCondition || nouns.length > 0) {
       setIsPopupVisible(true);
     } else {
       setError('조건, 지역, 인원 중 하나 이상을 말씀해 주세요.');
     }
-  };
+  }, [extractRegionPeople, extractConditions, extractProperNouns, regions, keywordMap]);
 
   // 음성 인식 시작
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  
   const startVoiceRecognition = useCallback(() => {
     if (recognitionRef.current) recognitionRef.current.abort();
 
-    navigator.mediaDevices.getUserMedia({ audio: true })
-      .then(() => {
+    navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: false,
+        autoGainControl: true
+      }
+    }).then(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; // 음성 인식 API
         if (!SpeechRecognition) {
           setMicDenied(true);
@@ -126,7 +132,7 @@ function App() {
           const recognition = new SpeechRecognition(); // 음성 인식 객체 생성
           recognition.lang = 'ko-KR';
           recognition.interimResults = false;
-          recognition.continuous = false;
+          recognition.continuous = true; // 연속 음성 인식
 
           // 음성 인식 결과 처리
           recognition.onresult = (event) => {
@@ -149,7 +155,8 @@ function App() {
       .catch(() => {
         setMicDenied(true);
       });
-  }, [extractRegionPeople, extractConditions, extractProperNouns]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extractRegionPeople, extractConditions, extractProperNouns, processVoiceInput]);
 
   // 검색 버튼 클릭 시 동작
   const handleQuerySubmit = useCallback(() => {
@@ -179,7 +186,11 @@ function App() {
         '장애인주차장': '장애인 주차장',
         '가깝은': '가까운',
         '짐보관': '짐 보관',
-        '보조건': '보조견'
+        '보조건': '보조견',
+        '반련견': '반려견',
+        '잇는': '있는',
+        '후ㅣㄹ채어': '휠체어',
+        '알내': '안내'
       };
       let corrected = text; // 원본 텍스트를 복사
       for (const typo in corrections) { // 오타 목록을 순회
@@ -224,6 +235,16 @@ function App() {
   // 마이크 차단 시 음성 인식 재시작 X
   const handleCancel = useCallback(() => {
     setIsPopupVisible(false);
+    setQuery('');
+    setMatchedNouns([]);
+    setConditions({
+      wheelchair: false,
+      elevator: false,
+      ramp: false,
+      parking: false,
+      assistant: false,
+      dog: false
+    });
     if (!micDenied) startVoiceRecognition();
   }, [micDenied, startVoiceRecognition]);
 

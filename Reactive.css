@@ -53,6 +53,7 @@
   .confirmation-popup .popup-content {
     max-width: 90vw;
     max-height: 80vh;
+    overflow-x: auto;
     overflow-y: auto;
     font-size: 16px;
   }
@@ -60,6 +61,8 @@
   .popup-buttons {
     flex-direction: column;
     gap: 12px;
+    display: flex;
+    align-items: center;
   }
 
   .popup-buttons button {
