@@ -133,14 +133,34 @@ function App() {
           recognition.lang = 'ko-KR';
           recognition.interimResults = false;
           recognition.continuous = true; // 연속 음성 인식
+          recognition.maxAlternatives = 1; // 최대 대체 결과 수
 
           // 음성 인식 결과 처리
+          let shouldContinue = true;               // ✅ 재시작 조건 제어
+
           recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            console.log('🎙 음성 인식 완료:', transcript);
+            const transcript = event.results[0][0].transcript.trim();
+            console.log('🎙 인식 결과:', transcript);
+
+            // ✅ 너무 짧은 인식은 무시하고 다시 시작
+            if (transcript.length < 5) {
+              console.log('너무 짧은 발화로 간주되어 인식을 재시도합니다.');
+              recognition.start();
+              return;
+            }
+
+            shouldContinue = false; // ✅ 정상 발화 처리되면 재시작 안 함
             processVoiceInput(transcript);
           };
 
+          recognition.onend = () => {
+          console.log('🎧 인식 종료됨');
+          if (shouldContinue) {
+            console.log('🔁 자동 재시작');
+            recognition.start();
+          }
+        };
+        
           // 음성 인식 시 오류 발생
           recognition.onerror = (e) => {
             if (e.error !== 'aborted') console.error('⚠ 음성 인식 오류:', e);
