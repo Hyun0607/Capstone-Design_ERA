@@ -68,6 +68,10 @@
     position: relative;
   }
 
+  .result-card img {
+    max-height: 20vh;
+  }
+
   .confirmation-popup .popup-content {
     max-width: 90vw;
     max-height: 80vh;

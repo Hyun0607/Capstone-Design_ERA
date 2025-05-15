@@ -53,13 +53,20 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
         </button>
 
         <ul className="results-list">
-          {hotels.map((hotel, index) => (
+          {hotels.slice(viewRange, viewRange + 3).map((hotel, index) => (
             <li
               key={index}
               tabIndex={0}
               aria-label={`${hotel.name} 槛家. 林家: ${hotel.description}`}
               className="result-card"
             >
+              {hotel.imageUrl && (
+                <img
+                  src={hotel.imageUrl}
+                  alt={hotel.name}
+                  className="hotel-image"
+                />
+              )}
               <h3>槛家疙 : {hotel.name}</h3>
               <h4>林家 : {hotel.description}</h4>
             </li>

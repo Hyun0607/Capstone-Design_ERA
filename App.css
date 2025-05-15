@@ -277,6 +277,20 @@
   margin-bottom: 10px;
 }
 
+.result-card h4 {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.result-card img {
+  width: 100%;
+  height: auto;
+  max-height: 25vh;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
 .caption-box {
   position: fixed;
   bottom: 15vh; /* 음성 버튼 위 */
