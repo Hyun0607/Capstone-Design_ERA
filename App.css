@@ -277,6 +277,23 @@
   margin-bottom: 10px;
 }
 
+.caption-box {
+  position: fixed;
+  bottom: 15vh; /* 음성 버튼 위 */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 1.2vh 2.5vw;
+  font-size: 1.2vw;
+  border-radius: 1.5vw;
+  max-width: 80vw;
+  width: fit-content;
+  z-index: 1001;
+  box-shadow: 0 0.5vh 2vh rgba(0, 0, 0, 0.3);
+  text-align: center;
+  white-space: pre-wrap;
+}
 
 
 

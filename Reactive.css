@@ -78,6 +78,14 @@
     height: auto;
     width: 80%;
   }
+
+  .caption-box {
+    bottom: 16vh;
+    font-size: 4.2vw;
+    padding: 2vh 4vw;
+    border-radius: 4vw;
+    max-width: 90vw;
+  }
 }
 
 /* 공통 초기 상태 */

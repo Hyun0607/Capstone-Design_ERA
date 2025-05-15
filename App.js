@@ -114,69 +114,55 @@ function App() {
   // 음성 인식 시작
   
   const startVoiceRecognition = useCallback(() => {
+    if (micDenied) {
+      setError('마이크 권한이 허용되지 않았습니다.');
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setMicDenied(true);
+      return;
+    }
+
     if (recognitionRef.current) recognitionRef.current.abort();
 
-    navigator.mediaDevices.getUserMedia({
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: false,
-        autoGainControl: true
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ko-KR';
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript.trim();
+      if (transcript.length < 5) {
+        recognition.start();
+        return;
       }
-    }).then(() => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition; // 음성 인식 API
-        if (!SpeechRecognition) {
-          setMicDenied(true);
-          return;
-        }
-        try {
-          const recognition = new SpeechRecognition(); // 음성 인식 객체 생성
-          recognition.lang = 'ko-KR';
-          recognition.interimResults = false;
-          recognition.continuous = true; // 연속 음성 인식
-          recognition.maxAlternatives = 1; // 최대 대체 결과 수
+      processVoiceInput(transcript);
+    };
 
-          // 음성 인식 결과 처리
-          let shouldContinue = true;               // ✅ 재시작 조건 제어
+    recognition.onerror = (e) => {
+      if (e.error !== 'aborted') {
+        console.error('음성 인식 오류:', e);
+      }
+    };
 
-          recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript.trim();
-            console.log('🎙 인식 결과:', transcript);
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [micDenied, processVoiceInput]);
 
-            // ✅ 너무 짧은 인식은 무시하고 다시 시작
-            if (transcript.length < 5) {
-              console.log('너무 짧은 발화로 간주되어 인식을 재시도합니다.');
-              recognition.start();
-              return;
-            }
+  // 앱 실행 시 1회만 권한 요청
+  useEffect(() => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setMicDenied(true);
+      return;
+    }
 
-            shouldContinue = false; // ✅ 정상 발화 처리되면 재시작 안 함
-            processVoiceInput(transcript);
-          };
-
-          recognition.onend = () => {
-          console.log('🎧 인식 종료됨');
-          if (shouldContinue) {
-            console.log('🔁 자동 재시작');
-            recognition.start();
-          }
-        };
-        
-          // 음성 인식 시 오류 발생
-          recognition.onerror = (e) => {
-            if (e.error !== 'aborted') console.error('⚠ 음성 인식 오류:', e);
-          };
-
-          recognitionRef.current = recognition; // 음성 인식 객체 저장
-          recognition.start(); // 음성 인식 시작
-        } catch (error) {
-          console.error('🚨 음성 인식 시작 실패:', error);
-        }
-      })
-      .catch(() => {
-        setMicDenied(true);
-      });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extractRegionPeople, extractConditions, extractProperNouns, processVoiceInput]);
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(() => setMicDenied(false))  // 권한 허용됨
+      .catch(() => setMicDenied(true)); // 권한 거부됨
+  }, []);
 
   // 검색 버튼 클릭 시 동작
   const handleQuerySubmit = useCallback(() => {
@@ -299,18 +285,23 @@ function App() {
     setViewRange(viewRange - 1);
   };
 
-  // 마이크 허용 시 음성 인식 시작
+  // 마이크 차단 여부 확인
   useEffect(() => {
-    startVoiceRecognition();
-  }, [startVoiceRecognition]);
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setMicDenied(true);
+    }
+  }, []);
 
   // Popup 열릴 때 "네 / 아니오" 음성 인식
   useEffect(() => {
     if (!isPopupVisible || micDenied) return;
-  
+    
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-  
+    if (!SpeechRecognition) {
+      setMicDenied(true);
+      return;
+    }
     // ✅ 기존 인식 종료
     if (recognitionRef.current) {
       recognitionRef.current.abort();
@@ -324,8 +315,11 @@ function App() {
   
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript.trim().toLowerCase();
-        if (transcript.includes("네" | "어")) handleConfirm();
-        else if (transcript.includes("아니" | "아니오")) handleCancel();
+        if (/네|응|좋아|그래/.test(transcript)) { // "네" 또는 "응"이 포함된 경우 - 검색 시작
+          handleConfirm(); 
+        } else if (/아니|아니오|싫어|다시/.test(transcript)) { // "아니" 또는 "싫어"가 포함된 경우 - 팝업 닫기
+          handleCancel();
+        }
       };
   
       recognition.onerror = (e) => {
@@ -350,7 +344,7 @@ function App() {
 
       {!showResults && (
         <div className="query-container">
-          <h3>{micDenied ? '조건을 직접 입력해 주세요' : '여행을 가실 지역 & 인원을 말씀해주세요'}</h3>
+          <h3>{micDenied ? '조건을 직접 입력해 주세요' : '원하시는 조건을 음성 인식 버튼을 누르신 뒤 말씀해주세요'}</h3>
           
           {micDenied && (
             <div className="menu">
@@ -392,13 +386,20 @@ function App() {
             </div>
           )}
 
-          <textarea
-            placeholder="숙소 조건을 입력해 주세요."
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="query-input"
-          />
-          <button className="query-button" onClick={handleQuerySubmit}>검색</button>
+          {micDenied ? (
+            <>
+              <textarea
+                className="query-input"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="숙소 조건을 입력해 주세요."
+              />
+              <button className="query-button" onClick={handleQuerySubmit}>검색</button>
+            </>
+            ) : (
+              <button className="query-button" onClick={startVoiceRecognition}>🎙 음성 인식</button>
+            )
+          }
           {error && <div className="error-message" data-message={error}><button onClick={() => setError('')}>확인</button></div>}
         </div>
       )}
