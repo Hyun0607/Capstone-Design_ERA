@@ -59,12 +59,16 @@
     flex-direction: row;
     justify-content: center;
     gap: 16px;
+    padding: 0 20px;
   }
 
-  .reset-button,
-  .voice-guide {
+  .reset-button {
     padding: 12px 18px;
     font-size: 16px;
+    position: relative;
+  }
+
+  .voice-guide {
     position: relative;
   }
 
@@ -93,13 +97,7 @@
     width: 80%;
   }
 
-  .caption-box {
-    bottom: 16vh;
-    font-size: 4.2vw;
-    padding: 2vh 4vw;
-    border-radius: 4vw;
-    max-width: 90vw;
-  }
+  
 }
 
 /* ���� �ʱ� ���� */
