@@ -332,6 +332,8 @@
 .reset-button {
   background-color: lightcoral;
   color: white;
+  position: absolute;
+  left: 20px;
 }
 
 /* 음성 안내 버튼 스타일 */
@@ -348,6 +350,7 @@
   cursor: pointer;
   z-index: 1000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  position: relative;
 }
 
 .voice-guide:hover {

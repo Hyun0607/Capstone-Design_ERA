@@ -1,6 +1,6 @@
 /* Reactive.css */
 
-/* ? µ¥½ºÅ©Åé(PC) ±âÁØ ½ºÅ¸ÀÏ */
+/* ? ï¿½ï¿½ï¿½ï¿½Å©ï¿½ï¿½(PC) ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ */
 @media (min-width: 768px) {
   .HomePC {
     display: flex;
@@ -31,7 +31,7 @@
 }
 
 
-/* ? ¸ð¹ÙÀÏ ±âÁØ ½ºÅ¸ÀÏ */
+/* ? ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Å¸ï¿½ï¿½ */
 @media (max-width: 767px) {
   .HomeMobile {
     display: block;
@@ -47,8 +47,17 @@
     padding: 0;
   }
 
+  .caption-box {
+    bottom: 16vh;
+    font-size: 4.2vw;
+    padding: 2vh 4vw;
+    border-radius: 4vw;
+    max-width: 90vw;
+  }
 
   .result-actions {
+    flex-direction: row;
+    justify-content: center;
     gap: 16px;
   }
 
@@ -56,6 +65,7 @@
   .voice-guide {
     padding: 12px 18px;
     font-size: 16px;
+    position: relative;
   }
 
   .confirmation-popup .popup-content {
@@ -88,7 +98,7 @@
   }
 }
 
-/* °øÅë ÃÊ±â »óÅÂ */
+/* ï¿½ï¿½ï¿½ï¿½ ï¿½Ê±ï¿½ ï¿½ï¿½ï¿½ï¿½ */
 .HomePC,
 .HomeMobile {
   display: block;
