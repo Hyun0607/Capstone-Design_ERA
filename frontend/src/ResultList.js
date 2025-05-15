@@ -31,9 +31,8 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
         >
           &lt;
         </button>
-
         <ul className="results-list">
-          {hotels.slice(viewRange, viewRange + 3).map((hotel, index) => (
+          {hotels.map((hotel, index) => (
             <li
               key={index}
               tabIndex={0}

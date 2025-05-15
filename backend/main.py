@@ -1,3 +1,11 @@
+# main.py
+
+from dotenv import load_dotenv
+load_dotenv()
+
+import os
+print("[DEBUG] OPENAI_API_KEY →", os.getenv("OPENAI_API_KEY"))
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Dict, List
@@ -30,9 +38,6 @@ def recommend(req: RecommendRequest):
         proper_nouns=req.properNouns
     )
 
-    print("\n✅ [백엔드 응답 결과]")
-    print(response)
-
     # ——— 하드코딩 이미지 URL 매핑 ———
     url_map = {
         "주문진리조트":       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWlOEH2zomiGPWdrFyMlbnLWSyCh6vY0y88g&s",
@@ -43,8 +48,9 @@ def recommend(req: RecommendRequest):
     }
 
     for item in response:
-        # item은 {'name':…, 'description':…, 'imageUrl':…} 구조라고 가정
         item["imageUrl"] = url_map.get(item.get("name", ""), "")
 
-    # 프론트가 기대하는 형태로 감싸서 반환
+    print("\n✅ [백엔드 응답 결과]")
+    print(response)
+
     return {"results": response}
