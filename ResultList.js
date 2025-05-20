@@ -69,6 +69,13 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
               )}
               <h3>숙소명 : {hotel.name}</h3>
               <h4>주소 : {hotel.description}</h4>
+              {hotel.keywords && (
+                <div className="hashtag-box">
+                  {hotel.keywords.map((tag, i) => (
+                    <span key={i} className="hashtag">#{tag}</span>
+                  ))}
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -91,7 +98,7 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
           onClick={handleVoiceToggle}
           aria-label={isSpeaking ? "음성 안내 중지" : "숙소 정보 음성 안내 시작"}
         >
-          {isSpeaking ? "? 음성 안내 중지" : "? 숙소 정보 듣기"}
+          <span role="img" aria-label="스피커">?</span>
         </button>
       </div>
 

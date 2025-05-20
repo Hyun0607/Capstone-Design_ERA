@@ -20,6 +20,8 @@ function App() {
   const [error, setError] = useState('');
   const [micDenied, setMicDenied] = useState(false); // 마이크 차단 여부 -default 상태: 허용
   const [matchedNouns, setMatchedNouns] = useState([]); // 핵심 명사 목록
+  const [isLoading, setIsLoading] = useState(false); // 로딩 상태
+  const [logText, setLogText] = useState(''); // API 응답 로그
 
   // 음성 인식 객체를 저장할 ref
   const recognitionRef = useRef(null);
@@ -103,8 +105,9 @@ function App() {
     const hasRegion = regions.some(r => text.includes(r.replace('시', '').replace('군', '')) || text.includes(r));
     const hasPeople = /[0-9]+(명|사람)/.test(text);
     const hasCondition = Object.values(keywordMap).some(keywords => keywords.some(k => text.includes(k)));
-
-    if (hasRegion || hasPeople || hasCondition || nouns.length > 0) {
+    const hasProperNoun = nouns.length > 0;
+    console.log('조건:', hasCondition, '지역:', hasRegion, '인원:', hasPeople, '고유명사:', hasProperNoun);
+    if (hasRegion || hasPeople || hasCondition || hasProperNoun) {
       setIsPopupVisible(true);
     } else {
       setError('조건, 지역, 인원 중 하나 이상을 말씀해 주세요.');
@@ -170,6 +173,11 @@ function App() {
       setError('지역과 인원을 입력해 주세요.');
       return;
     }
+    
+    if (query.trim() === '') { // 쿼리가 비어있을 때의 디폴트 질문
+      setQuery(`${selectedRegion}에서 ${selectedPeople}이 지내기 좋은 숙소를 추천해줘`);
+    }
+    
     // 쿼리에서 지역과 인원 추출
     extractConditions(query);
     // 쿼리에서 고유명사 추출
@@ -209,6 +217,7 @@ function App() {
     const correctedQuery = correctTypos(query); //오타 교정된 쿼리
   
     try {
+      setIsLoading(true); // 로딩 상태
       // 백엔드로 API 요청 양식
       const res = await axios.post(`{API_URL}/api/recommend`, {
         query: correctedQuery,
@@ -218,6 +227,10 @@ function App() {
         properNouns: matchedNouns   // ✅ 핵심어 함께 전송
       });
   
+      setLogText(JSON.stringify(res.data, null, 2)); // 전체 응답 로그 저장
+      console.log('API 응답:', res.data);
+      setIsLoading(false); // 로딩 상태 해제
+
       const results = res.data.results;
       if (results.length === 0) {
         setError('조건에 맞는 숙소가 없습니다.');
@@ -338,6 +351,15 @@ function App() {
 
   return (
     <div className="App">
+      {isLoading ? (
+      <div className="loading-overlay">
+        <p>추천 숙소를 불러오고 있어요. 잠시만 기다려 주세요...</p>
+        <div className="spinner" />
+        <pre className="log-text">{logText}</pre>
+      </div>
+    ) : (
+      <>
+     {/* 로딩 중일 때 오버레이 */} 
       <div className="Title">
         <h3>SilverStay<span>노약자 & 장애인 전용 강원도 숙소 가이드</span></h3>
       </div>
@@ -434,8 +456,9 @@ function App() {
           viewRange={viewRange}
         />
       )}
-    </div>
-  );
-}
+      </>
+    )}
+  </div>
+)};
 
 export default App;

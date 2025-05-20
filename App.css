@@ -193,6 +193,55 @@
   transform: scale(1.1);
 }
 
+/* 로딩 중 화면 스타일 */
+.loading-overlay { 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  font-size: 22px;
+  text-align: center;
+}
+
+/* 로딩 중 스피너 스타일 */
+.spinner {
+  margin-top: 20px;
+  width: 48px;
+  height: 48px;
+  border: 5px solid #ccc;
+  border-top: 5px solid #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 로딩 중 텍스트 스타일 */
+.log-text {
+  margin-top: 24px;
+  background: #eee;
+  color: #333;
+  padding: 12px;
+  max-width: 90vw;
+  max-height: 240px;
+  overflow-y: auto;
+  font-size: 12px;
+  white-space: pre-wrap;
+  border-radius: 8px;
+}
+
+
 /* 에러 메시지 팝업 스타일 */
 .error-message {
   position: fixed;
@@ -275,11 +324,14 @@
 .result-card h3 {
   font-size: 24px;
   margin-bottom: 10px;
+  color: gold;
+  font-weight: bold;
 }
 
 .result-card h4 {
   font-size: 20px;
   margin-bottom: 10px;
+  color: black;
 }
 
 .result-card img {
@@ -289,6 +341,20 @@
   object-fit: cover;
   border-radius: 8px;
   margin-bottom: 8px;
+}
+
+.hashtag-box {
+  margin-top: 10px;
+}
+
+.hashtag {
+  display: inline-block;
+  background-color: #e0f7fa;
+  color: rgb(232, 240, 71);
+  padding: 4px 10px;
+  margin: 4px 4px 0 0;
+  font-size: 18px;
+  border-radius: 12px;
 }
 
 .caption-box {
@@ -308,9 +374,6 @@
   text-align: center;
   white-space: pre-wrap;
 }
-
-
-
 
 /* 조건 다시 보기 버튼 */
 .result-actions {
@@ -352,21 +415,28 @@
 
 /* 음성 안내 버튼 스타일 */
 .voice-guide {
-  position: fixed;
-  bottom: 100px;
-  left: 20px;
-  padding: 12px 20px;
-  font-size: 16px;
-  background-color: #444;
+  background-color: #ff9800;
   color: white;
+  font-size: 20px;
+  padding: 10px;
+  border-radius: 50%;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   border: none;
-  border-radius: 8px;
   cursor: pointer;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
+  bottom: 12vh;
+  right: 5vw;
+  width: 10vw;
+  height: 10vw;
+  max-width: 48px;
+  max-height: 48px;
+  transition: background-color 0.2s ease;
+  z-index: 1001;
 }
 
 .voice-guide:hover {
-  background-color: #222;
+  background-color: #e68900;
 }
