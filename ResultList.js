@@ -10,10 +10,17 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
   const [caption, setCaption] = useState(''); // 음성 안내 텍스트
 
   useEffect(() => {
-    if (!isSpeaking || voiceIndex >= hotels.length) return;
+    if (!isSpeaking) return;
+    if (voiceIndex >= hotels.length) {
+      setIsSpeaking(false);
+      setCaption(''); // 음성 안내 종료 후 자막 제거
+      return;
+    }
 
     const hotel = hotels[voiceIndex];
-    const text = `${voiceIndex + 1}번 숙소는 ${hotel.name}. 주소는 ${hotel.description} 입니다.`;
+    const text = hotel.tags && hotel.tags.length > 0
+      ? `${voiceIndex + 1}번 숙소는 ${hotel.name}. 주소는 ${hotel.description}. 편의시설로는 ${hotel.tags.join(', ')} 이 있습니다.`
+      : `${voiceIndex + 1}번 숙소는 ${hotel.name}. 주소는 ${hotel.description} 입니다.`;
     setCaption(text);
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -69,9 +76,11 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
               )}
               <h3>숙소명 : {hotel.name}</h3>
               <h4>주소 : {hotel.description}</h4>
-              {hotel.keywords && (
+
+              {/* 장애인 편의시설 해시태그 출력 */}
+              {hotel.tags && hotel.tags.length > 0 && (
                 <div className="hashtag-box">
-                  {hotel.keywords.map((tag, i) => (
+                  {hotel.tags.map((tag, i) => (
                     <span key={i} className="hashtag">#{tag}</span>
                   ))}
                 </div>

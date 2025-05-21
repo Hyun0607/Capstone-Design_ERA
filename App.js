@@ -227,7 +227,13 @@ function App() {
         properNouns: matchedNouns   // ✅ 핵심어 함께 전송
       });
   
-      setLogText(JSON.stringify(res.data, null, 2)); // 전체 응답 로그 저장
+      setLogText(
+        `📊 DEBUG 정보\n` +
+        `- 지역 숙소 수: ${res.data.debug?.지역_숙소_수 ?? 'N/A'}\n` +
+        `- 벡터 검색된 문서 수: ${res.data.debug?.벡터_검색_문서_수 ?? 'N/A'}\n` +
+        `- 지역 필터링 후 문서 수: ${res.data.debug?.지역_필터링_후_문서_수 ?? 'N/A'}\n` +
+        `- 최종 추천 숙소 수: ${res.data.results?.length ?? 'N/A'}`
+      ); // API 응답 로그
       console.log('API 응답:', res.data);
       setIsLoading(false); // 로딩 상태 해제
 
@@ -276,6 +282,8 @@ function App() {
     setViewRange(0);
     setShowResults(false);
     setError('');
+    setMatchedNouns([]);
+    setLogText('')
     if (!micDenied) startVoiceRecognition();
   };
 
@@ -353,7 +361,10 @@ function App() {
     <div className="App">
       {isLoading ? (
       <div className="loading-overlay">
-        <p>추천 숙소를 불러오고 있어요. 잠시만 기다려 주세요...</p>
+        <p>
+          AI가 조건에 맞는 숙소를 꼼꼼히 살펴보는 중이에요! 🏡<br />
+          조금만 기다려 주세요 😊
+        </p>
         <div className="spinner" />
         <pre className="log-text">{logText}</pre>
       </div>
@@ -449,7 +460,7 @@ function App() {
       {/* 검색 결과 리스트 */}
       {showResults && (
         <ResultList
-          hotels={response.slice(viewRange * 3, (viewRange + 1) * 3)}
+          hotels={response}
           onReset={handleReset}
           onNext={handleNext}
           onPrev={handlePrev}

@@ -378,13 +378,16 @@
 /* 조건 다시 보기 버튼 */
 .result-actions {
   position: fixed;
-  bottom: 20px;
+  bottom: 0;
   left: 0;
   width: 100%;
   display: flex;
   justify-content: center;
   gap: 40px;
-  z-index: 999;
+  padding: 12px 20px;
+  background-color: white;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
 }
 
 .result-actions button {
@@ -409,8 +412,6 @@
 .reset-button {
   background-color: lightcoral;
   color: white;
-  position: absolute;
-  left: 20px;
 }
 
 /* 음성 안내 버튼 스타일 */
@@ -418,23 +419,15 @@
   background-color: #ff9800;
   color: white;
   font-size: 20px;
-  padding: 10px;
-  border-radius: 50%;
+  padding: 10px 20px;
+  border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   border: none;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  bottom: 12vh;
-  right: 5vw;
-  width: 10vw;
-  height: 10vw;
-  max-width: 48px;
-  max-height: 48px;
   transition: background-color 0.2s ease;
-  z-index: 1001;
 }
 
 .voice-guide:hover {
