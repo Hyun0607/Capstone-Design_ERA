@@ -36,11 +36,22 @@ llm_chain = LLMChain(prompt=chat_prompt, llm=ChatOpenAI(model_name="gpt-4o", tem
 
 vectordb = load_vectordb()
 
-# ✅ 최종 추천 함수
-def recommend_accommodations(user_query: str, region_name: str, top_k: int = 3) -> str:
-    region_hotel_names = get_hotels_by_region(region_name)
-    all_docs = vectordb.similarity_search(user_query, k=top_k * 6)
-    filtered_docs = [doc for doc in all_docs if doc.metadata["숙소명"] in region_hotel_names]
-    추천숙소들 = list({doc.metadata["숙소명"] for doc in filtered_docs[:top_k]})
+# ✨ 최종 추천 함수 (지역 벡터 필터링 포함)
+def recommend_accommodations(user_query, region_name, top_k=5):
+    # 🔍 지역 필터링을 벡터 검색에 직접 적용
+    filtered_docs = vectordb.similarity_search(
+        user_query,
+        k=top_k,
+        filter={"시군구명": region_name}
+    )
+    print("[DEBUG] 📍 지역 벡터 필터 검색 결과:", len(filtered_docs))
+
+    추천숙소들 = list({doc.metadata["숙소명"] for doc in filtered_docs})
+    print("[DEBUG] ✅ 최종 추천 대상 숙소:", 추천숙소들)
+
     context = build_context_from_sql(추천숙소들)
-    return llm_chain.run({"context": context, "question": user_query})
+    print("[DEBUG] 📦 생성된 context 내용:\n", context)
+
+    result = llm_chain.run({"context": context, "question": user_query})
+    print("[DEBUG] 🤖 LLM 응답 원문:\n", repr(result))
+    return result
