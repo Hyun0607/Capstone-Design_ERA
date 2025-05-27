@@ -1,17 +1,32 @@
 # main.py
-
 from dotenv import load_dotenv
 load_dotenv()
 
 import os
-print("[DEBUG] OPENAI_API_KEY →", os.getenv("OPENAI_API_KEY"))
-
+import json
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Dict, List
 from rag_engine import recommend_accommodations
 
 app = FastAPI()
+
+# 프로젝트 루트(또는 main.py와 같은 폴더)에 위치한 image_urls.json 파일 경로 설정
+BASE_DIR = os.path.dirname(__file__)
+IMAGE_URLS_PATH = os.path.join(BASE_DIR, "image_urls.json")
+
+# JSON 파일에서 URL 매핑 불러오기
+try:
+    with open(IMAGE_URLS_PATH, encoding="utf-8") as f:
+        url_map: Dict[str, str] = json.load(f)
+except FileNotFoundError:
+    print(f"[WARN] image_urls.json 파일을 찾을 수 없습니다: {IMAGE_URLS_PATH}")
+    url_map = {}
+except json.JSONDecodeError as e:
+    print(f"[ERROR] image_urls.json 파싱 실패: {e}")
+    url_map = {}
+
+print("[DEBUG] OPENAI_API_KEY →", os.getenv("OPENAI_API_KEY"))
 
 # 프런트에서 보내는 요청 구조 정의
 class RecommendRequest(BaseModel):
@@ -38,19 +53,13 @@ def recommend(req: RecommendRequest):
         proper_nouns=req.properNouns
     )
 
-    # ——— 하드코딩 이미지 URL 매핑 ———
-    url_map = {
-        "주문진리조트":       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWlOEH2zomiGPWdrFyMlbnLWSyCh6vY0y88g&s",
-        "경포수 호텔":         "https://mblogthumb-phinf.pstatic.net/MjAyNDA4MjVfMTgg/MDAxNzI0NTc1NjAyMzA1.-baoxkCCv1ywB_QnKHsBSydsMkEfq23UHMs0pZ992TIg.K2WGjQJFAtx440-XTN_n-4ytEIJp7Kvvpe4tS3C02FIg.PNG/%EA%B0%95%EB%A6%89%EA%B2%BD%ED%8F%AC%EC%88%98%ED%98%B8%ED%85%94-1.png?type=w800",
-        "루이스호텔":           "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRocbxKOV9MaYgUnDbCSwRXPUpSr06ZPTapNQ&s",
-        "스카이 베이 경포":     "https://mblogthumb-phinf.pstatic.net/MjAyNDA4MDhfMjAx/MDAxNzIzMTAwMDM1MDI2.Dovpt_bHO_5Vm7ibuzIeadfrSk_7vKN6hnUdmXl1JPsg.VTcORaTQ42E_05dwHOo6k8ieywWruOqJQlYk_0xo8_Ig.JPEG/SE-33f0f3f2-2df3-46e3-9d4e-6e48d377691a.jpg?type=w800",
-        "강릉 그레이 호텔":    "https://cf.bstatic.com/xdata/images/hotel/max1024x768/421300564.jpg?k=e1602a47a5840c9720cca824afa6314b533ae8cc75d1a54c4e198ebbadd2bd43&o=&hp=1",
-    }
-
+    # JSON 파일에서 불러온 매핑으로 imageUrl 할당
     for item in response:
-        item["imageUrl"] = url_map.get(item.get("name", ""), "")
+        name = item.get("name", "")
+        item["imageUrl"] = url_map.get(name, "")
 
     print("\n✅ [백엔드 응답 결과]")
-    print(response)
+    for item in response:
+        print(f"- {item}")
 
     return {"results": response}

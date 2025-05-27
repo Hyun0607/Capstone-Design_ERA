@@ -190,6 +190,55 @@
   transform: scale(1.1);
 }
 
+/* 로딩 중 화면 스타일 */
+.loading-overlay { 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  font-size: 22px;
+  text-align: center;
+}
+
+/* 로딩 중 스피너 스타일 */
+.spinner {
+  margin-top: 20px;
+  width: 48px;
+  height: 48px;
+  border: 5px solid #ccc;
+  border-top: 5px solid #333;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 로딩 중 텍스트 스타일 */
+.log-text {
+  margin-top: 24px;
+  background: #eee;
+  color: #333;
+  padding: 12px;
+  max-width: 90vw;
+  max-height: 240px;
+  overflow-y: auto;
+  font-size: 12px;
+  white-space: pre-wrap;
+  border-radius: 8px;
+}
+
+
 /* 에러 메시지 팝업 스타일 */
 .error-message {
   position: fixed;
@@ -272,22 +321,70 @@
 .result-card h3 {
   font-size: 24px;
   margin-bottom: 10px;
+  color: gold;
+  font-weight: bold;
 }
 
+.result-card h4 {
+  font-size: 20px;
+  margin-bottom: 10px;
+  color: black;
+}
 
+.result-card img {
+  width: 100%;
+  height: auto;
+  max-height: 25vh;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
 
+.hashtag-box {
+  margin-top: 10px;
+}
 
+.hashtag {
+  display: inline-block;
+  background-color: #e0f7fa;
+  color: rgb(232, 240, 71);
+  padding: 4px 10px;
+  margin: 4px 4px 0 0;
+  font-size: 18px;
+  border-radius: 12px;
+}
+
+.caption-box {
+  position: fixed;
+  bottom: 15vh; /* 음성 버튼 위 */
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 1.2vh 2.5vw;
+  font-size: 1.2vw;
+  border-radius: 1.5vw;
+  max-width: 80vw;
+  width: fit-content;
+  z-index: 1001;
+  box-shadow: 0 0.5vh 2vh rgba(0, 0, 0, 0.3);
+  text-align: center;
+  white-space: pre-wrap;
+}
 
 /* 조건 다시 보기 버튼 */
 .result-actions {
   position: fixed;
-  bottom: 20px;
+  bottom: 0;
   left: 0;
   width: 100%;
   display: flex;
   justify-content: center;
   gap: 40px;
-  z-index: 999;
+  padding: 12px 20px;
+  background-color: white;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
 }
 
 .result-actions button {
@@ -318,63 +415,103 @@
 .voice-guide {
   position: fixed;
   bottom: 100px;
-  left: 20px;
-  padding: 12px 20px;
-  font-size: 16px;
-  background-color: #444;
+  right: 20px;
+
+  width: 80px;
+  height: 80px;
+  padding: 0;
+
+  border-radius: 50%;
+  background-color: #ff9800;
   color: white;
+
+  font-size: 36px !important;       /* 아이콘 크기 크게 */
+  line-height: 1;        /* 중앙 정렬 보정 */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
   border: none;
-  border-radius: 8px;
   cursor: pointer;
-  z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1200;
+
+  transition: transform 0.2s ease
 }
 
 .voice-guide:hover {
-  background-color: #222;
+  transform: scale(1.1);
+  background-color: #e68900;
 }
 
-/* 추가본 */
-/* 팝업 버튼 컨테이너: 버튼들을 수직 중앙 정렬 */
 .popup-buttons {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  align-items: center;  /* 수직 가운데 정렬을 위해 추가 */
+  align-items: center;   /* ← 추가 */
   gap: 40px;
   margin-top: 30px;
 }
 
-/* 공통: confirm/cancel 버튼 수정 */
 .confirm-button,
 .cancel-button {
-  /* 텍스트를 가로모드로 강제 */
-  writing-mode: horizontal-tb !important;
-  white-space: nowrap;         /* 텍스트가 줄바꿈되지 않도록 */
-  
-  /* 텍스트 중앙 정렬 */
+  display: inline-flex;      /* ← 텍스트를 flex 컨테이너 안에서 정렬 */
+  align-items: center;       /* ← 수직 중앙 정렬 */
+  justify-content: center;   /* ← 수평 중앙 정렬 */
+  white-space: nowrap;       /* ← “아니오”가 줄바꿈되지 않도록 */
+}
+
+.hashtag {
+  background-color: #dceefc; /* 파스텔 스카이 블루 */
+  color: #1b3a57;            /* 진한 네이비 */
+}
+
+
+.intro-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-color: black;
+  z-index: 9999;
+  overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-
-  /* 너비를 충분히 확보해서 '아니오' 전체가 들어가도록 */
-  width: 120px;                
-  height: 50px;
-  font-size: 28px;             /* 필요에 따라 조정 */
-  
-  border: none;
-  border-radius: 10%;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  transition: transform 1s ease, opacity 1s ease;
 }
 
-/* 기존 색상 그대로 유지 */
-.confirm-button { background-color: green; color: white; }
-.cancel-button  { background-color: red;   color: white; }
+.intro-overlay.shrink {
+  transform: scale(0.2);
+  opacity: 0;
+}
 
-/* hover 효과 유지 */
-.confirm-button:hover,
-.cancel-button:hover {
-  transform: scale(1.1);
+.intro-background {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url('./intro_image.jpg');
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.5);
+  z-index: 1;
+}
+
+.intro-content {
+  z-index: 2;
+  text-align: center;
+  color: white;
+}
+
+.intro-title {
+  font-size: 4rem;
+  font-weight: bolder;
+  margin: 0;
+}
+
+.intro-subtitle {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-top: 10px;
 }
