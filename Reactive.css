@@ -1,6 +1,6 @@
 /* Reactive.css */
 
-/* ? ����ũ��(PC) ���� ��Ÿ�� */
+/* PC 화면 */
 @media (min-width: 768px) {
   .HomePC {
     display: flex;
@@ -31,7 +31,7 @@
 }
 
 
-/* ? ����� ���� ��Ÿ�� */
+/* ? �����? ���� ��Ÿ�� */
 @media (max-width: 767px) {
   .HomeMobile {
     display: block;

@@ -1,33 +1,33 @@
 // ResultList.js
 import React, {useEffect, useState} from 'react';
-// ¼÷¼Ò ÃßÃµ °á°ú¸¦ ¸®½ºÆ® ÇüÅÂ·Î Ãâ·ÂÇÏ´Â ÄÄÆ÷³ÍÆ®
-// Àå¾ÖÀÎºĞµéÀÇ Á¢±Ù¼º Çâ»óÀ» À§ÇØ ARIA ¼Ó¼º(½ºÅ©¸° ¸®´õ)°ú tabIndex(Tab Å°¸¦ ÅëÇØ Æ÷Ä¿½º ÀÌµ¿)¸¦ Æ÷ÇÔÇÔ
-// À½¼º ¾È³» ±â´ÉÀ» Ãß°¡ÇÏ¿© »ç¿ëÀÚ°¡ ¼÷¼Ò Á¤º¸¸¦ À½¼ºÀ¸·Î µéÀ» ¼ö ÀÖµµ·Ï ÇÔ
+// ìˆ™ì†Œ ì¶”ì²œ ê²°ê³¼ë¥¼ ë¦¬ìŠ¤íŠ¸ í˜•íƒœë¡œ ì¶œë ¥í•˜ëŠ” ì»´í¬ë„ŒíŠ¸
+// ì¥ì• ì¸ë¶„ë“¤ì˜ ì ‘ê·¼ì„± í–¥ìƒì„ ìœ„í•´ ARIA ì†ì„±(ìŠ¤í¬ë¦° ë¦¬ë”)ê³¼ tabIndex(Tab í‚¤ë¥¼ í†µí•´ í¬ì»¤ìŠ¤ ì´ë™)ë¥¼ í¬í•¨í•¨
+// ìŒì„± ì•ˆë‚´ ê¸°ëŠ¥ì„ ì¶”ê°€í•˜ì—¬ ì‚¬ìš©ìê°€ ìˆ™ì†Œ ì •ë³´ë¥¼ ìŒì„±ìœ¼ë¡œ ë“¤ì„ ìˆ˜ ìˆë„ë¡ í•¨
 
 function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
-  const [voiceIndex, setVoiceIndex] = useState(0); // À½¼º ¾È³»¸¦ À§ÇÑ ÀÎµ¦½º
-  const [isSpeaking, setIsSpeaking] = useState(false); // À½¼º ¾È³» »óÅÂ
-  const [caption, setCaption] = useState(''); // À½¼º ¾È³» ÅØ½ºÆ®
+  const [voiceIndex, setVoiceIndex] = useState(0); // ìŒì„± ì•ˆë‚´ë¥¼ ìœ„í•œ ì¸ë±ìŠ¤
+  const [isSpeaking, setIsSpeaking] = useState(false); // ìŒì„± ì•ˆë‚´ ìƒíƒœ
+  const [caption, setCaption] = useState(''); // ìŒì„± ì•ˆë‚´ í…ìŠ¤íŠ¸
 
   useEffect(() => {
     if (!isSpeaking) return;
     if (voiceIndex >= hotels.length) {
       setIsSpeaking(false);
-      setCaption(''); // À½¼º ¾È³» Á¾·á ÈÄ ÀÚ¸· Á¦°Å
+      setCaption(''); // ìŒì„± ì•ˆë‚´ ì¢…ë£Œ í›„ ìë§‰ ì œê±°
       return;
     }
 
     const hotel = hotels[voiceIndex];
     const text = hotel.tags && hotel.tags.length > 0
-      ? `${voiceIndex + 1}¹ø ¼÷¼Ò´Â ${hotel.name}. ÁÖ¼Ò´Â ${hotel.description}. ÆíÀÇ½Ã¼³·Î´Â ${hotel.tags.join(', ')} ÀÌ ÀÖ½À´Ï´Ù.`
-      : `${voiceIndex + 1}¹ø ¼÷¼Ò´Â ${hotel.name}. ÁÖ¼Ò´Â ${hotel.description} ÀÔ´Ï´Ù.`;
+      ? `${voiceIndex + 1}ë²ˆ ìˆ™ì†ŒëŠ” ${hotel.name}. ì£¼ì†ŒëŠ” ${hotel.description}. í¸ì˜ì‹œì„¤ë¡œëŠ” ${hotel.tags.join(', ')} ì´ ìˆìŠµë‹ˆë‹¤.`
+      : `${voiceIndex + 1}ë²ˆ ìˆ™ì†ŒëŠ” ${hotel.name}. ì£¼ì†ŒëŠ” ${hotel.description} ì…ë‹ˆë‹¤.`;
     setCaption(text);
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ko-KR';
     utterance.rate = 0.9;
 
-    utterance.onend = () => { // À½¼º ¾È³»°¡ ³¡³µÀ» ¶§
+    utterance.onend = () => { // ìŒì„± ì•ˆë‚´ê°€ ëë‚¬ì„ ë•Œ
       setTimeout(() => setVoiceIndex((v) => v + 1), 1000);
     };
 
@@ -35,7 +35,7 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
     window.speechSynthesis.speak(utterance);
   }, [voiceIndex, isSpeaking, hotels]);
 
-  const handleVoiceToggle = () => { // À½¼º ¾È³» ½ÃÀÛ/ÁßÁö
+  const handleVoiceToggle = () => { // ìŒì„± ì•ˆë‚´ ì‹œì‘/ì¤‘ì§€
     if (isSpeaking) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
@@ -49,11 +49,11 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
 
   return (
     <div className="results-section" id="results-section">
-      <h2>ÃßÃµ ¼÷¼Ò ¸ñ·Ï</h2>
+      <h2>ì¶”ì²œ ìˆ™ì†Œ ëª©ë¡</h2>
       <div className="results-container">
         <button
           onClick={onPrev}
-          aria-label="ÀÌÀü ¼÷¼Ò º¸±â"
+          aria-label="ì´ì „ ìˆ™ì†Œ ë³´ê¸°"
           className="nav-button prev-button"
         >
           &lt;
@@ -64,7 +64,7 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
             <li
               key={index}
               tabIndex={0}
-              aria-label={`${hotel.name} ¼÷¼Ò. ÁÖ¼Ò: ${hotel.description}`}
+              aria-label={`${hotel.name} ìˆ™ì†Œ. ì£¼ì†Œ: ${hotel.description}`}
               className="result-card"
             >
               {hotel.imageUrl && (
@@ -74,10 +74,10 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
                   className="hotel-image"
                 />
               )}
-              <h3>¼÷¼Ò¸í : {hotel.name}</h3>
-              <h4>ÁÖ¼Ò : {hotel.description}</h4>
+              <h3>ìˆ™ì†Œëª… : {hotel.name}</h3>
+              <h4>ì£¼ì†Œ : {hotel.description}</h4>
 
-              {/* Àå¾ÖÀÎ ÆíÀÇ½Ã¼³ ÇØ½ÃÅÂ±× Ãâ·Â */}
+              {/* ì¥ì• ì¸ í¸ì˜ì‹œì„¤ í•´ì‹œíƒœê·¸ ì¶œë ¥ */}
               {hotel.tags && hotel.tags.length > 0 && (
                 <div className="hashtag-box">
                   {hotel.tags.map((tag, i) => (
@@ -91,7 +91,7 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
 
         <button
           onClick={onNext}
-          aria-label="´ÙÀ½ ¼÷¼Ò º¸±â"
+          aria-label="ë‹¤ìŒ ìˆ™ì†Œ ë³´ê¸°"
           className="nav-button next-button"
         >
           &gt;
@@ -99,15 +99,15 @@ function ResultList({ hotels, onReset, onNext, onPrev, viewRange }) {
       </div>
 
       <div className="result-actions">
-        <button className="reset-button" onClick={onReset} aria-label="Ã¹ È­¸éÀ¸·Î ÀÌµ¿">
-          Ã¹ È­¸éÀ¸·Î
+        <button className="reset-button" onClick={onReset} aria-label="ì²« í™”ë©´ìœ¼ë¡œ ì´ë™">
+          ì²« í™”ë©´ìœ¼ë¡œ
         </button>
         <button
           className="voice-guide"
           onClick={handleVoiceToggle}
-          aria-label={isSpeaking ? "À½¼º ¾È³» ÁßÁö" : "¼÷¼Ò Á¤º¸ À½¼º ¾È³» ½ÃÀÛ"}
+          aria-label={isSpeaking ? "ìŒì„± ì•ˆë‚´ ì¤‘ì§€" : "ìˆ™ì†Œ ì •ë³´ ìŒì„± ì•ˆë‚´ ì‹œì‘"}
         >
-          <span role="img" aria-label="½ºÇÇÄ¿">?</span>
+          <span role="img" aria-label="ìŠ¤í”¼ì»¤">?</span>
         </button>
       </div>
 

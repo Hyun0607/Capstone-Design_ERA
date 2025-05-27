@@ -2,11 +2,13 @@ import './App.css';
 import './Reactive.css';
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import axios from 'axios';
+import Intro from './Intro';
 import ConfirmationPopup from './Popup';
 import ResultList from './ResultList';
 import properNouns from './properNouns.json';
 
 function App() {
+  const [showIntro, setShowIntro] = useState(true); // 인트로 화면 상태
   // 지역, 인원, 쿼리, 응답, 뷰 범위, 팝업 상태, 드롭다운 상태, 결과 상태, 에러 메시지
   const [selectedRegion, setSelectedRegion] = useState('지역');
   const [selectedPeople, setSelectedPeople] = useState('인원');
@@ -94,13 +96,13 @@ function App() {
   // 음성 텍스트 입력 처리
   // 쿼리, 지역, 인원, 조건, 핵심어 추출
   const processVoiceInput = useCallback((text) => {
-    console.log('🎤 음성 텍스트:', text);
+    console.log('? 음성 텍스트:', text);
     setQuery(text); // 음성 인식 결과를 쿼리에 설정
     extractRegionPeople(text); // 지역과 인원 추출
     extractConditions(text); // 조건 추출
     const nouns = extractProperNouns(text); // 핵심어 추출
     setMatchedNouns(nouns);
-    console.log('🧠 핵심어 추출됨:', nouns);
+    console.log('? 핵심어 추출됨:', nouns);
 
     const hasRegion = regions.some(r => text.includes(r.replace('시', '').replace('군', '')) || text.includes(r));
     const hasPeople = /[0-9]+(명|사람)/.test(text);
@@ -199,8 +201,6 @@ function App() {
         '엘베이터': '엘리베이터',
         '장애인주차장': '장애인 주차장',
         '가깝은': '가까운',
-        '짐보관': '짐 보관',
-        '보조건': '보조견',
         '반련견': '반려견',
         '잇는': '있는',
         '후ㅣㄹ채어': '휠체어',
@@ -224,15 +224,12 @@ function App() {
         region: selectedRegion,
         people: selectedPeople,
         conditions,
-        properNouns: matchedNouns   // ✅ 핵심어 함께 전송
+        properNouns: matchedNouns   // ? 핵심어 함께 전송
       });
   
       setLogText(
-        `📊 DEBUG 정보\n` +
-        `- 지역 숙소 수: ${res.data.debug?.지역_숙소_수 ?? 'N/A'}\n` +
-        `- 벡터 검색된 문서 수: ${res.data.debug?.벡터_검색_문서_수 ?? 'N/A'}\n` +
-        `- 지역 필터링 후 문서 수: ${res.data.debug?.지역_필터링_후_문서_수 ?? 'N/A'}\n` +
-        `- 최종 추천 숙소 수: ${res.data.results?.length ?? 'N/A'}`
+        ` DEBUG 정보\n` +
+        `${res.data.debug}\n`
       ); // API 응답 로그
       console.log('API 응답:', res.data);
       setIsLoading(false); // 로딩 상태 해제
@@ -287,7 +284,7 @@ function App() {
     if (!micDenied) startVoiceRecognition();
   };
 
-  // ✅ 다음 숙소 보기 버튼 (>)
+  // ? 다음 숙소 보기 버튼 (>)
   const handleNext = () => {
     const next = (viewRange + 1) * 3;
     if (next >= response.length) {
@@ -297,7 +294,7 @@ function App() {
     setViewRange(viewRange + 1);
   };
 
-  // ✅ 이전 숙소 보기 버튼 (<)
+  // ? 이전 숙소 보기 버튼 (<)
   const handlePrev = () => {
     if (viewRange === 0) {
       alert('이전 숙소가 없습니다.');
@@ -323,7 +320,7 @@ function App() {
       setMicDenied(true);
       return;
     }
-    // ✅ 기존 인식 종료
+    // ? 기존 인식 종료
     if (recognitionRef.current) {
       recognitionRef.current.abort();
     }
@@ -358,118 +355,125 @@ function App() {
   
 
   return (
-    <div className="App">
-      {isLoading ? (
-      <div className="loading-overlay">
-        <p>
-          AI가 조건에 맞는 숙소를 꼼꼼히 살펴보는 중이에요! 🏡<br />
-          조금만 기다려 주세요 😊
-        </p>
-        <div className="spinner" />
-        <pre className="log-text">{logText}</pre>
-      </div>
-    ) : (
-      <>
-     {/* 로딩 중일 때 오버레이 */} 
-      <div className="Title">
-        <h3>SilverStay<span>노약자 & 장애인 전용 강원도 숙소 가이드</span></h3>
-      </div>
+    <>
+    {showIntro && <Intro onFinish={() => setShowIntro(false)} />}
+    {/* 인트로 화면이 끝나면 앱 화면 표시 */}
+    {!showIntro && (
+      <div className="App">
+        {isLoading ? (
+        <div className="loading-overlay">
+          <p>
+            AI가 조건에 맞는 숙소를 꼼꼼히 살펴보는 중이에요! ?<br />
+            조금만 기다려 주세요 ?
+          </p>
+          <div className="spinner" />
+          <pre className="log-text">{logText}</pre>
+        </div>
+        ) : (
+        <>
+        {/* 로딩 중일 때 오버레이 */} 
+        <div className="Title">
+          <h3>SilverStay<span>노약자 & 장애인 전용 강원도 숙소 가이드</span></h3>
+        </div>
 
-      {!showResults && (
-        <div className="query-container">
-          <h3>{micDenied ? '조건을 직접 입력해 주세요' : '원하시는 조건을 음성 인식 버튼을 누르신 뒤 말씀해주세요'}</h3>
+        {!showResults && (
+          <div className="query-container">
+            <h3>{micDenied ? '조건을 직접 입력해 주세요' : '원하시는 조건을 음성 인식 버튼을 누르신 뒤 말씀해주세요'}</h3>
           
-          {micDenied && (
-            <div className="menu">
-              <ul>
-                {/* 지역 드롭다운 */}
-                <li onClick={() => setShowRegions(!showRegions)}>
-                  {selectedRegion}
-                  {showRegions && (
-                    <ul>
-                      {regions.map((region, idx) => (
-                        <li key={idx} onClick={() => {
-                          setSelectedRegion(region);
-                          setShowRegions(false);
-                        }}>
-                          {region}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
+            {micDenied && (
+              <div className="menu">
+                <ul>
+                  {/* 지역 드롭다운 */}
+                  <li onClick={() => setShowRegions(!showRegions)}>
+                   {selectedRegion}
+                    {showRegions && (
+                      <ul>
+                        {regions.map((region, idx) => (
+                          <li key={idx} onClick={() => {
+                            setSelectedRegion(region);
+                            setShowRegions(false);
+                          }}>
+                           {region}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
 
-                {/* 인원 드롭다운 */}
-                <li onClick={() => setShowPeople(!showPeople)}>
-                  {selectedPeople}
-                  {showPeople && (
-                    <ul>
-                      {['1명', '2명', '3명', '4명', '5명 이상'].map((p, idx) => (
-                        <li key={idx} onClick={() => {
-                          setSelectedPeople(p);
-                          setShowPeople(false);
-                        }}>
-                          {p}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              </ul>
-            </div>
-          )}
+                  {/* 인원 드롭다운 */}
+                  <li onClick={() => setShowPeople(!showPeople)}>
+                    {selectedPeople}
+                    {showPeople && (
+                      <ul>
+                        {['1명', '2명', '3명', '4명', '5명 이상'].map((p, idx) => (
+                          <li key={idx} onClick={() => {
+                            setSelectedPeople(p);
+                            setShowPeople(false);
+                          }}>
+                            {p}
+                          </li>
+                       ))}
+                      </ul>
+                    )}
+                 </li>
+                </ul>
+              </div>
+            )}
 
-          {micDenied ? (
-            <>
-              <textarea
-                className="query-input"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="숙소 조건을 입력해 주세요."
-              />
-              <button className="query-button" onClick={handleQuerySubmit}>검색</button>
-            </>
-            ) : (
-              <button className="query-button" onClick={startVoiceRecognition}>🎙 음성 인식</button>
-            )
-          }
-          {error && <div className="error-message" data-message={error}><button onClick={() => setError('')}>확인</button></div>}
-        </div>
-      )}
+            {micDenied ? (
+              <>
+                <textarea
+                  className="query-input"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="숙소 조건을 입력해 주세요."
+                />
+                <button className="query-button" onClick={handleQuerySubmit}>검색</button>
+              </>
+              ) : (
+                <button className="query-button" onClick={startVoiceRecognition}>음성 인식</button>
+              )
+            }
+            {error && <div className="error-message" data-message={error}><button onClick={() => setError('')}>확인</button></div>}
+          </div>
+        )}
 
-      {/* 결과 */}
-      {isPopupVisible && (
-        <ConfirmationPopup
-          region={selectedRegion}
-          people={selectedPeople}
-          query={query}
-          conditions={conditions} 
-          onConfirm={handleConfirm}
-          onCancel={handleCancel}
-        />
-      )}
+        {/* 결과 */}
+        {isPopupVisible && (
+          <ConfirmationPopup
+            region={selectedRegion}
+            people={selectedPeople}
+            query={query}
+            conditions={conditions} 
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+          />
+        )}
 
-      {/* 검색 결과 */}
-      {showResults && (
-        <div className="result-header">
-          <h3>추천 숙소</h3>
-          <p>총 {response.length}개 숙소가 검색되었습니다.</p>
-        </div>
-      )}
+        {/* 검색 결과 */}
+        {showResults && (
+          <div className="result-header">
+            <h3>추천 숙소</h3>
+            <p>총 {response.length}개 숙소가 검색되었습니다.</p>
+          </div>
+        )}
       
-      {/* 검색 결과 리스트 */}
-      {showResults && (
-        <ResultList
-          hotels={response}
-          onReset={handleReset}
-          onNext={handleNext}
-          onPrev={handlePrev}
-          viewRange={viewRange}
-        />
+        {/* 검색 결과 리스트 */}
+        {showResults && (
+          <ResultList
+            hotels={response}
+            onReset={handleReset}
+            onNext={handleNext}
+            onPrev={handlePrev}
+            viewRange={viewRange}
+          />
+        )}
+        </>
+      )}
+        </div>
       )}
       </>
-    )}
-  </div>
-)};
+  )
+};
 
 export default App;
