@@ -17,8 +17,8 @@ from konlpy.tag import Okt
 import re
 
 # ✅ 3. 데이터 로딩
-df_noun = pd.read_csv("숙소_고유명사(장애인) 리스트.csv")
-df_overview = pd.read_csv("VectorDB_사전data_핵심어.csv")
+df_noun = pd.read_csv("숙소_고유명사 리스트.csv")
+df_overview = pd.read_csv("숙소_설명문문.csv")
 df_noun["고유명사"] = df_noun["고유명사"].apply(eval)  # 리스트로 변환
 df = pd.merge(df_noun, df_overview, on="숙소명", how="left")
 
@@ -85,56 +85,3 @@ df["포함된_고유명사(TF-IDF)"] = df["포함된_고유명사(TF-IDF)"].appl
 # 새 파일로 저장
 df.to_csv("고유명사_TFIDF_포함숙소_ver2_sorted.csv", index=False, encoding="utf-8-sig")
 print("✅ 저장 완료: 고유명사_TFIDF_포함숙소_ver2_sorted.csv")
-
-# TF-IDF 행렬을 DataFrame으로 변환 (행: 문서, 열: 단어)
-df_tfidf = pd.DataFrame(tfidf_matrix.toarray(), columns=feature_names)
-df_tfidf
-
-# 0번째 행의 TF-IDF 값들 중 0보다 큰 단어만 필터링
-first_row_keywords = df_tfidf.loc[0]
-tfidf_keywords = first_row_keywords[first_row_keywords > 0].sort_values(ascending=False)
-
-# 결과 출력
-print(tfidf_keywords)
-
-# 1. 고유명사 전체 집합 구성
-set_proper = set()
-for kw_list in df["통합키워드"]:
-    set_proper.update(kw_list)
-
-# 2. TF-IDF 컬럼명 중 고유명사와 겹치는 단어만 추출
-feature_names = df_tfidf.columns
-target_keywords = list(set(feature_names).intersection(set_proper))
-
-# 3. 해당 키워드 컬럼만 추출
-df_tfidf_target = df_tfidf[target_keywords]
-
-# 4. TF-IDF 값이 0 초과인 행만 필터링
-score_sum = df_tfidf_target.sum(axis=1)
-valid_rows = score_sum > 0
-df_filtered = df[valid_rows].reset_index(drop=True)
-
-# 5. 숙소명 + 포함된 고유명사 키워드 보기 (선택)
-included_keywords = []
-for i, row in df_tfidf_target[valid_rows].iterrows():
-    matched = row[row > 0].index.tolist()
-    included_keywords.append(matched)
-
-df_filtered["포함된_고유명사"] = included_keywords
-
-# 6. 결과 확인
-print(df_filtered[["숙소명", "포함된_고유명사"]])
-
-# 고유명사 + TF-IDF 점수 → 소수점 셋째 자리까지 반올림 + float 처리
-included_keywords_with_score = []
-
-for i, row in df_tfidf_target[valid_rows].iterrows():
-    matched = row[row > 0]
-    # {"강릉역": 0.253} 형태로 변환
-    matched_dict = {k: round(float(v), 3) for k, v in matched.items()}
-    included_keywords_with_score.append(matched_dict)
-
-# DataFrame에 추가
-df_filtered["포함된_고유명사(TF-IDF)"] = included_keywords_with_score
-
-df_filtered.to_csv("고유명사_TFIDF_포함숙소_ver2.csv", index=False, encoding="utf-8-sig")
