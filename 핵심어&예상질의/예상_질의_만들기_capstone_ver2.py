@@ -29,7 +29,7 @@ response = openai.ChatCompletion.create(
 print(response["choices"][0]["message"]["content"])
 
 # ✅ 데이터 불러오기
-df = pd.read_csv("VectorDB_사전data.csv", encoding="utf-8")
+df = pd.read_csv("숙소_설명문.csv", encoding="utf-8")
 df["숙소설명"] = df["숙소설명"].fillna("")
 df["장애인편의시설"] = df["장애인편의시설"].fillna("")
 
@@ -139,5 +139,5 @@ df_result = pd.DataFrame(results)
 df_result
 
 # ✅ 6. 결과 저장
-df_result.to_csv("VectorDB_캡스톤_ver2.csv", index=False, encoding="utf-8-sig")
+df_result.to_csv("VectorDB.csv", index=False, encoding="utf-8-sig")
 print("✅ 결과 저장 완료: 생성된_질문_결과.csv")
