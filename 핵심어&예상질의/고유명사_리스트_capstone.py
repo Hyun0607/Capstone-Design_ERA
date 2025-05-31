@@ -123,25 +123,3 @@ for i, row in df.iterrows():
 df_result = pd.DataFrame(results)
 df_result.to_csv("숙소_고유명사(장애인) 리스트.csv", index=False, encoding="utf-8-sig")
 print("✅ 저장 완료: 숙소_고유명사(장애인) 리스트.csv")
-
-import pandas as pd
-import ast  # 문자열을 실제 리스트로 변환
-
-# 1. CSV 파일 불러오기
-df = pd.read_csv("숙소_고유명사(장애인) 리스트.csv", encoding="utf-8-sig")
-
-# 2. 두 리스트를 병합하는 함수 정의
-def merge_lists(row):
-    try:
-        list1 = ast.literal_eval(row['고유명사']) if pd.notnull(row['고유명사']) else []
-        list2 = ast.literal_eval(row['배려 키워드']) if pd.notnull(row['배려 키워드']) else []
-        return list1 + list2
-    except:
-        return []
-
-# 3. 통합 키워드 컬럼 생성
-df['통합키워드'] = df.apply(merge_lists, axis=1)
-
-# 4. 결과 저장
-df.to_csv("숙소_고유명사(장애인)_통합키워드.csv", index=False, encoding="utf-8-sig")
-print("✅ 통합 완료: 숙소_고유명사(장애인)_통합키워드.csv")
