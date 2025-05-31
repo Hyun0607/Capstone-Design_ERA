@@ -62,7 +62,7 @@ def extract_goyu_nouns(description, hotel_name):
         return f"ERROR: {e}"
 
 # ✅ 2. CSV 불러오기 (컬럼명: 숙소명, 설명문)
-df = pd.read_csv("VectorDB_사전data.csv")  # 숙소명, 설명문 컬럼이 있어야 함
+df = pd.read_csv("숙소_설명문.csv")  # 숙소명, 설명문 컬럼이 있어야 함
 
 # ✅ 3. 처리 루프
 results = []
