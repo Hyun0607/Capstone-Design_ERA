@@ -61,46 +61,10 @@ def extract_goyu_nouns(description, hotel_name):
     except Exception as e:
         return f"ERROR: {e}"
 
-# ✅ 2. 배려 키워드 추출 함수
-def extract_facility_keywords(description):
-    system_msg = {
-        "role": "system",
-        "content": "당신은 숙소 설명문에서 고령층 및 장애인을 위한 배려 키워드를 추출하는 전문가입니다."
-    }
-
-    user_msg = {
-        "role": "user",
-        "content": f"""
-아래 숙소 설명문에서 **고령층 및 장애인을 위한 시설 또는 조건 관련 키워드만 리스트 형태로 추출**해주세요.
-
-✅ 예: 엘리베이터, 욕실 손잡이, 휠체어, 경사로, 낮은 침대, 장애인 전용 주차장, 점자 안내판 등
-
-❌ 일반적 장점(전망 좋음, 위치 좋음, 자연 친화적 등)은 제외해주세요.
-
----
-
-### 설명문:
-{description}
-
-✅ 출력 예시:
-["엘리베이터", "휠체어", "계단 주 출입구", "점자 안내판"]
-"""
-    }
-
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4o",
-            messages=[system_msg, user_msg],
-            temperature=0.2
-        )
-        return response["choices"][0]["message"]["content"].strip()
-    except Exception as e:
-        return f"ERROR: {e}"
-
-# ✅ 3. CSV 불러오기 (컬럼명: 숙소명, 설명문)
+# ✅ 2. CSV 불러오기 (컬럼명: 숙소명, 설명문)
 df = pd.read_csv("VectorDB_사전data.csv")  # 숙소명, 설명문 컬럼이 있어야 함
 
-# ✅ 4. 처리 루프
+# ✅ 3. 처리 루프
 results = []
 
 for i, row in df.iterrows():
@@ -108,12 +72,10 @@ for i, row in df.iterrows():
     description = row["설명문"]
 
     고유명사 = extract_goyu_nouns(description, name)
-    배려키워드 = extract_facility_keywords(description)
-
+    
     results.append({
         "숙소명": name,
         "고유명사": 고유명사,
-        "배려 키워드": 배려키워드
     })
 
     print(f"[{i+1}/{len(df)}] {name} → 완료")
@@ -121,5 +83,5 @@ for i, row in df.iterrows():
 
 # ✅ 5. 결과 저장
 df_result = pd.DataFrame(results)
-df_result.to_csv("숙소_고유명사(장애인) 리스트.csv", index=False, encoding="utf-8-sig")
-print("✅ 저장 완료: 숙소_고유명사(장애인) 리스트.csv")
+df_result.to_csv("숙소_고유명사 리스트.csv", index=False, encoding="utf-8-sig")
+print("✅ 저장 완료: 숙소_고유명사 리스트.csv")
